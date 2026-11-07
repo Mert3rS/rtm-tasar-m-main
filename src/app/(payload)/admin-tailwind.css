@@ -1,0 +1,50 @@
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css';
+
+@custom-variant dark (&:where(.dark, .dark *, [data-theme='dark'], [data-theme='dark'] *));
+
+@source '../../components/admin/**/*.{ts,tsx}';
+@source '../../components/dashboard-01/**/*.{ts,tsx}';
+@source '../../components/ui/**/*.{ts,tsx}';
+@source '../../hooks/**/*.{ts,tsx}';
+
+@theme inline {
+  --breakpoint-sm: 40rem;
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 80rem;
+  --breakpoint-2xl: 96rem;
+  --color-background: var(--rtm-admin-bg);
+  --color-foreground: var(--rtm-admin-text);
+  --color-card: var(--rtm-admin-surface);
+  --color-card-foreground: var(--rtm-admin-text);
+  --color-popover: var(--rtm-admin-surface);
+  --color-popover-foreground: var(--rtm-admin-text);
+  --color-primary: var(--rtm-admin-text);
+  --color-primary-foreground: var(--rtm-admin-surface);
+  --color-secondary: var(--rtm-admin-surface-muted);
+  --color-secondary-foreground: var(--rtm-admin-text);
+  --color-muted: var(--rtm-admin-surface-muted);
+  --color-muted-foreground: var(--rtm-admin-muted);
+  --color-accent: var(--rtm-admin-accent-soft);
+  --color-accent-foreground: var(--rtm-admin-text);
+  --color-destructive: #c74242;
+  --color-border: var(--rtm-admin-line);
+  --color-input: var(--rtm-admin-line);
+  --color-ring: var(--rtm-admin-accent-strong);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-sidebar: var(--rtm-admin-sidebar);
+  --color-sidebar-foreground: var(--rtm-admin-text);
+  --color-sidebar-primary: var(--rtm-admin-accent);
+  --color-sidebar-primary-foreground: var(--rtm-admin-accent-ink);
+  --color-sidebar-accent: var(--rtm-admin-accent-soft);
+  --color-sidebar-accent-foreground: var(--rtm-admin-text);
+  --color-sidebar-border: var(--rtm-admin-line);
+  --color-sidebar-ring: var(--rtm-admin-accent-strong);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+}

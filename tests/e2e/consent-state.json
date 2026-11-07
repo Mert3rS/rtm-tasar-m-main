@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "rtm-consent",
+      "value": "%7B%22v%22%3A%22unconfigured%22%2C%22c%22%3A%7B%22f%22%3A0%2C%22p%22%3A0%2C%22a%22%3A0%2C%22m%22%3A0%7D%2C%22t%22%3A%222026-11-05T00%3A00%3A00.000Z%22%2C%22id%22%3A%22e2eDecisionUnconfigured01%22%7D",
+      "domain": "localhost",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}
