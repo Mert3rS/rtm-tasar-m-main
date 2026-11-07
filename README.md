@@ -68,7 +68,7 @@ Payload yönetim paneli: [http://localhost:3000/admin](http://localhost:3000/adm
 
 | Değişken | Açıklama |
 | --- | --- |
-| `DATABASE_URI` | PostgreSQL bağlantı adresi |
+| `DATABASE_URI` | PostgreSQL bağlantı adresi; tanımlı değilse Vercel entegrasyonlarının `DATABASE_URL` veya `DATABASE_POSTGRES_URL` değişkeni kullanılır |
 | `PAYLOAD_SECRET` | Payload oturum ve token imzalama anahtarı; gizli tutulmalıdır |
 | `NEXT_PUBLIC_SERVER_URL` | Uygulamanın public adresi |
 | `SITE_URL` | Gerçek HTTPS production kökü; canonical ve sosyal paylaşım URL'leri için önceliklidir. Yerelde boş bırakın. |

@@ -34,6 +34,11 @@ import { InquiryAttachments } from './collections/InquiryAttachments'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const databaseUri =
+  process.env.DATABASE_URI ||
+  process.env.DATABASE_URL ||
+  process.env.DATABASE_POSTGRES_URL ||
+  ''
 
 export default buildConfig({
   i18n: {
@@ -96,7 +101,7 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: process.env.DATABASE_URI || '',
+      connectionString: databaseUri,
     },
   }),
   sharp,
