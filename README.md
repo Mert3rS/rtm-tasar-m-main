@@ -843,3 +843,4 @@ Paylaşılabilir yerel çıktılar `.tools/phase8.3-qa/` altında korunmuştur: 
 - Production öncesi migration'lar çalıştırılmalıdır.
 - `/media` yerel dosya sistemi yerine kalıcı, S3 uyumlu bir obje depolamaya taşınmalıdır.
 - HTTPS kullanılmalı; veritabanı ve yönetim sırları repoya eklenmemelidir.
+# rtm-tasar-m-main
