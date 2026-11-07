@@ -4,7 +4,7 @@ import { lazy, Suspense, useState } from 'react'
 import { colorHex, palette } from '@/lib/configurator/config'
 import { kitchenGeometry, type KitchenUnit } from '@/lib/configurator/kitchen'
 import { kitchenKindNames } from '@/lib/configurator/kitchenSchema'
-import { fitProps } from '@/lib/configurator/props/layout'
+import { fitProps, type PropPlacement } from '@/lib/configurator/props/layout'
 import { productPropSets } from '@/lib/configurator/props/catalog'
 import { Boards, Front, type Board } from './CabinetParts'
 import { SelectionOutline } from './SelectionOutline'
@@ -78,29 +78,31 @@ function Unit({
     props.onKitchenSelect?.({ row: unit.row, index: unit.section })
     if (!props.onKitchenSelect && unit.row === 'lower') props.onSelect(unit.section, 0)
   }
-  const items =
-    props.preferences.props &&
-    props.propsReady &&
-    width > 0.12 &&
-    (showInterior || unit.kind === 'glass') &&
-    !isSink &&
-    !isOven &&
-    !isDishwasher &&
-    unit.kind !== 'drawers'
-      ? fitProps(
-          productPropSets.mutfak.middle,
-          {
-            x: 0,
-            width: width - 0.036,
-            bottom: cabinetBottom + cabinetHeight / (shelfCount + 1) + 0.018,
-            height: cabinetHeight / (shelfCount + 1) - 0.04,
-            depth: depth - 0.04,
-            cell: `${unit.row}-${unit.section}`,
-            zone: 'middle',
-          },
-          props.lowQuality,
-        )
-      : []
+  const items: PropPlacement[] = []
+  if (props.preferences.props && props.propsReady && width > 0.12 &&
+    (showInterior || unit.kind === 'glass') && !isSink && !isOven && !isDishwasher) {
+    if (unit.kind === 'drawers') {
+      let floor = cabinetBottom
+      for (const [index, drawerHeight] of heights.entries()) {
+        items.push(...fitProps(productPropSets.mutfak.drawer, {
+          x: 0, width: width - 0.08, bottom: floor + 0.04,
+          height: drawerHeight - 0.08, depth: depth * 0.7 - 0.04,
+          cell: `kitchen-drawer-${unit.row}-${unit.section}-${index}`, zone: 'drawer',
+        }, props.lowQuality).map((item): PropPlacement => ({ ...item, position: [item.position[0], item.position[1], depth * 0.8] })))
+        floor += drawerHeight
+      }
+    } else for (let level = 0; level <= shelfCount; level++) {
+      const kinds = upper
+        ? level === 0 ? ['plates', 'bowls'] as const : level === 1 ? ['glass', 'mug'] as const : ['jar', 'glass'] as const
+        : level === 0 ? productPropSets.mutfak.bottom : productPropSets.mutfak.top
+      items.push(...fitProps([...kinds], {
+        x: 0, width: width - 0.036,
+        bottom: cabinetBottom + cabinetHeight * level / (shelfCount + 1) + 0.018,
+        height: cabinetHeight / (shelfCount + 1) - 0.04, depth: depth - 0.04,
+        cell: `kitchen-${unit.row}-${unit.section}-${level}`, zone: upper ? 'top' : 'middle',
+      }, props.lowQuality))
+    }
+  }
   return (
     <group
       position={[unit.x / 100, 0, 0]}

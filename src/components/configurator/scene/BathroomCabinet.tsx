@@ -1,7 +1,7 @@
 'use client'
 
 import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { ExtrudeGeometry, Shape } from 'three'
+import { CanvasTexture, ExtrudeGeometry, Shape, SRGBColorSpace } from 'three'
 import { baseHeight, colorHex, palette, type Config } from '@/lib/configurator/config'
 import { bathroomGeometry, type BathroomUnit } from '@/lib/configurator/bathroom'
 import { bathroomKindNames } from '@/lib/configurator/bathroomSchema'
@@ -16,7 +16,7 @@ import type { SceneProps } from './CabinetScene'
 const RepresentativeProps = lazy(() => import('./RepresentativeProps'))
 type BathroomSceneProps = SceneProps & { lowQuality: boolean; propsReady: boolean }
 
-function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUnit }) {
+function BathroomBay({ unit, framed = false, standalone = false, ...props }: BathroomSceneProps & { unit: BathroomUnit; framed?: boolean; standalone?: boolean }) {
   const c = props.config,
     b = c.bathroom,
     colors = useSceneColors()
@@ -35,11 +35,11 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
     c.o.govde === 'beyaz'
       ? palette.beyaz.hex
       : c.o.govde === 'ahsap'
-        ? palette.mese.hex
+        ? palette['acik-mese'].hex
         : c.o.govde === 'antrasit'
           ? palette.antrasit.hex
           : faceColor
-  const selected =
+  const selected = !standalone &&
     (props.bathroomSelection?.row ?? 'lower') === unit.row &&
     (props.bathroomSelection?.index ?? props.selected) === unit.index
   const open = props.open || localOpen || unit.kind === 'open' || unit.kind === 'glass'
@@ -49,7 +49,7 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
     led: Board[] = [],
     placements: PropPlacement[] = []
   function select() {
-    props.onBathroomSelect?.({ row: unit.row, index: unit.index })
+    if (!standalone) props.onBathroomSelect?.({ row: unit.row, index: unit.index })
   }
   if (unit.kind !== 'washer') {
     boards.push(
@@ -72,10 +72,11 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
           led.push({ p: [0, y - 0.012, depth / 2 - 0.025], s: [width - 0.06, 0.006, 0.01] })
       }
     if (props.preferences.props && props.propsReady && open && !isDrawers && unit.kind !== 'sink')
-      for (let i = 0; i <= Math.min(unit.shelves, props.lowQuality ? 0 : 2); i++)
+      for (let i = 0; i <= Math.min(unit.shelves, props.lowQuality ? 1 : 4); i++)
         placements.push(
           ...fitProps(
-            upper ? productPropSets.banyo.middle : productPropSets.banyo.top,
+            (i % 2 === 0 && (!upper || depth >= 0.29))
+              ? productPropSets.banyo.top : productPropSets.banyo.middle,
             {
               x: 0,
               width: width - 0.04,
@@ -88,6 +89,24 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
             props.lowQuality,
           ),
         )
+  }
+  if (props.preferences.props && props.propsReady && isDrawers) {
+    for (let i = 0; i < unit.drawers; i++) {
+      if (!props.open && drawer !== i) continue
+      if (sinkDrawers && i === unit.drawers - 1) continue
+      placements.push(...fitProps(productPropSets.banyo.drawer, {
+        x: 0, width: width - 0.08, bottom: bottom + height * i / unit.drawers + 0.04,
+        height: height / unit.drawers - 0.07, depth: depth * 0.7 - 0.04,
+        cell: `bath-drawer-${unit.index}-${i}`, zone: 'drawer',
+      }, props.lowQuality).map((item): PropPlacement => ({ ...item, position: [item.position[0], item.position[1], depth * 0.8] })))
+    }
+  }
+  if (props.preferences.props && props.propsReady && open && unit.kind === 'sink' && !sinkDrawers) {
+    placements.push(...fitProps(productPropSets.banyo.top, {
+      x: 0, width: width - 0.04, bottom: bottom + 0.02,
+      height: Math.min(0.24, height * 0.5), depth: depth - 0.06,
+      cell: `bath-sink-storage-${unit.index}`, zone: 'bottom',
+    }, props.lowQuality))
   }
   if (upper && c.o.led.includes('ic'))
     led.push({
@@ -102,11 +121,12 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
       })
   const options = { ...c.o, renk: faceKey, ral: upper && c.o.iki ? '' : c.o.ral, camt: unit.glass }
   const doorType = unit.kind === 'mirror' ? 'ayna' : unit.kind === 'glass' ? 'cam' : 'kapak'
-  const leaves = Math.ceil(unit.width / 65)
+  const leaves = Math.ceil(unit.width / 65),
+    inset = framed ? 0.036 : 0
   return (
     <group
       position={[unit.x / 100, 0, unit.z / 100]}
-      name={`bathroom-${unit.row}-${unit.index}`}
+      name={standalone ? 'bathroom-tall-cabinet' : `bathroom-${unit.row}-${unit.index}`}
       onClick={(event) => {
         event.stopPropagation()
         select()
@@ -115,7 +135,7 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
         event.stopPropagation()
         setHover(true)
         props.onHover(
-          `${upper ? 'Üst' : 'Alt'} ${unit.index + 1} · ${bathroomKindNames[unit.kind]} · ${unit.width} cm`,
+          standalone ? `Boy dolabı · ${unit.width} × ${unit.height} cm` : `${upper ? 'Üst' : 'Alt'} ${unit.index + 1} · ${bathroomKindNames[unit.kind]} · ${unit.width} cm`,
         )
       }}
       onPointerOut={() => {
@@ -128,6 +148,16 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
         color={body}
         wood={c.o.govde === 'ahsap' || (c.o.govde === 'kapak' && Boolean(palette[faceKey].wood))}
       />
+      {framed && unit.kind === 'open' ? <>
+        <Boards color={palette.antrasit.hex} roughness={0.85} items={[
+          { p: [0, bottom + height / 2, -depth / 2 + 0.012], s: [width - 0.036, height - 0.036, 0.01] },
+          ...Array.from({ length: unit.shelves + 1 }, (_, i): Board => ({
+            p: [0, bottom + 0.02 + height * i / (unit.shelves + 1), 0.005],
+            s: [width - 0.036, 0.012, depth - 0.025],
+          })),
+          ...[-1, 1].map((sign): Board => ({ p: [sign * (width / 2 - 0.022), bottom + height / 2, 0], s: [0.009, height - 0.036, depth - 0.025] })),
+        ]} />
+      </> : null}
       {isDrawers
         ? Array.from({ length: unit.drawers }, (_, i) => (
             <Front
@@ -153,14 +183,14 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
           ? Array.from({ length: leaves }, (_, i) => (
               <group
                 key={i}
-                position={[((i - (leaves - 1) / 2) * width) / leaves, 0, 0]}
+                position={[((i - (leaves - 1) / 2) * (width - inset)) / leaves, 0, 0]}
                 scale={[i % 2 ? -1 : 1, 1, 1]}
               >
                 <Front
                   x={0}
                   y={bottom + height / 2}
-                  w={width / leaves}
-                  h={height}
+                  w={(width - inset) / leaves}
+                  h={height - inset}
                   depth={depth}
                   type={doorType}
                   softMirror={upper}
@@ -232,10 +262,52 @@ function BathroomBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUn
     </group>
   )
 }
+function bathroomReflection() {
+  // A local, illustrative room reflection; no extra render pass or remote image.
+  const canvas = document.createElement('canvas')
+  canvas.width = canvas.height = 512
+  const ctx = canvas.getContext('2d')
+  if (ctx) {
+    const light = ctx.createLinearGradient(0, 0, 512, 512)
+    light.addColorStop(0, '#e4e3df')
+    light.addColorStop(1, '#a8aaa4')
+    ctx.fillStyle = light
+    ctx.fillRect(0, 0, 512, 512)
+    ctx.fillStyle = '#222624'
+    ctx.fillRect(0, 0, 186, 365)
+    for (let y = 20; y < 350; y += 12) {
+      ctx.fillStyle = '#e6e6df'
+      ctx.fillRect(0, y, 168, 5)
+    }
+    ctx.fillStyle = '#858780'
+    ctx.fillRect(338, 0, 5, 512)
+    for (const x of [300, 408]) {
+      ctx.fillStyle = '#eae9e3'
+      ctx.beginPath()
+      ctx.moveTo(x, 300)
+      ctx.lineTo(x + 20, 278)
+      ctx.lineTo(x + 45, 302)
+      ctx.lineTo(x + 53, 490)
+      ctx.lineTo(x - 9, 490)
+      ctx.closePath()
+      ctx.fill()
+      ctx.strokeStyle = '#cecec6'
+      ctx.lineWidth = 3
+      ctx.beginPath()
+      ctx.moveTo(x + 20, 295)
+      ctx.lineTo(x + 25, 478)
+      ctx.stroke()
+    }
+  }
+  const texture = new CanvasTexture(canvas)
+  texture.colorSpace = SRGBColorSpace
+  return texture
+}
 function WallMirror({ config: c, unit }: { config: Config; unit: BathroomUnit }) {
   const colors = useSceneColors(),
     b = c.bathroom
-  const texture = useMemo(() => mirrorSurfaceTexture(), [])
+  const reference = Boolean(b?.sideCabinet)
+  const texture = useMemo(() => reference ? bathroomReflection() : mirrorSurfaceTexture(), [reference])
   useEffect(() => () => texture.dispose(), [texture])
   const width =
       Math.min(unit.width * 0.85, b?.mirrorShape === 'round' ? unit.height : unit.height * 0.8) /
@@ -285,13 +357,13 @@ function WallMirror({ config: c, unit }: { config: Config; unit: BathroomUnit })
       ) : null}
       <mesh geometry={geometry} castShadow>
         <meshPhysicalMaterial
-          color={colors.metal}
+          color={reference ? palette.beyaz.hex : colors.metal}
           map={texture}
           emissiveMap={texture}
           emissive={colors.light}
-          emissiveIntensity={0.55}
-          metalness={1}
-          roughness={0.045}
+          emissiveIntensity={reference ? 0.35 : 0.55}
+          metalness={reference ? 0.2 : 1}
+          roughness={0.09}
           envMapIntensity={1.4}
           clearcoat={1}
         />
@@ -349,7 +421,7 @@ export function BathroomCabinet(props: BathroomSceneProps) {
         />
       ) : null}
       {g.lower.map((unit) => (
-        <BathroomBay key={`lower-${unit.index}`} {...props} unit={unit} />
+        <BathroomBay key={`lower-${unit.index}`} {...props} unit={unit} framed={Boolean(b.sideCabinet)} />
       ))}
       {b.upperEnabled
         ? g.upper.map((unit) => <BathroomBay key={`upper-${unit.index}`} {...props} unit={unit} />)
@@ -357,9 +429,10 @@ export function BathroomCabinet(props: BathroomSceneProps) {
             <WallMirror
               key={unit.index}
               config={c}
-              unit={{ ...unit, bottom: g.counter + b.gap, height: b.upperHeight }}
+              unit={{ ...unit, ...(b.sideCabinet && g.sinks.length === 1 ? { x: 0, width: c.d.w } : {}), bottom: g.counter + b.gap, height: b.upperHeight }}
             />
           ))}
+      {g.sideCabinet ? <BathroomBay {...props} unit={g.sideCabinet} framed standalone /> : null}
       <BathroomFixtures config={c} />
       <Suspense fallback={null}>
         {countertopProps.length ? <RepresentativeProps placements={countertopProps} /> : null}

@@ -45,6 +45,7 @@ import {
 } from './panels/DesignPanels'
 import { TechnicalDrawing } from './TechnicalDrawing'
 import { StudioIcon } from './StudioIcon'
+import { StudioTool as Tool } from './StudioTool'
 import { DesignSummary } from './DesignSummary'
 import { StudioGuide } from './StudioGuide'
 import { MaterialSwatch } from './MaterialSwatch'
@@ -88,36 +89,6 @@ class SceneBoundary extends Component<
   render() {
     return this.state.failed ? this.props.fallback : this.props.children
   }
-}
-function Tool({
-  label,
-  children,
-  onClick,
-  pressed,
-  disabled = false,
-  secondary = false,
-}: {
-  label: string
-  children: ReactNode
-  onClick: () => void
-  pressed?: boolean
-  disabled?: boolean
-  secondary?: boolean
-}) {
-  return (
-    <button
-      type="button"
-      className={`dc-tool${secondary ? ' dc-secondary-scene-tool' : ''}`}
-      title={label}
-      aria-label={label}
-      aria-pressed={pressed}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {children}
-      <span className="dc-tool-label">{label}</span>
-    </button>
-  )
 }
 function Summary({ config: c, onStep }: { config: Config; onStep: (s: number) => void }) {
   const rows = [
@@ -743,15 +714,15 @@ export function Configurator({ origin }: { origin?: string }) {
               Eşyaları göster
             </button>
             <div className="dc-view-tools">
+              <Tool label={open ? 'Tüm kapakları kapat' : 'Tüm kapakları aç'} showLabel pressed={open} onClick={() => setOpen(!open)}>
+                <StudioIcon name="door" />
+              </Tool>
               <Tool
                 label="İç düzeni göster"
                 pressed={interior}
                 onClick={() => setInterior(!interior)}
               >
                 <StudioIcon name="layers" />
-              </Tool>
-              <Tool label="Kapakları aç / kapat" pressed={open} onClick={() => setOpen(!open)}>
-                <StudioIcon name="door" />
               </Tool>
               <Tool label="Uzaklaş" onClick={() => setZoom((v) => Math.max(0.45, v - 0.15))}>
                 <StudioIcon name="minus" />

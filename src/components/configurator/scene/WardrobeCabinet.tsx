@@ -99,7 +99,7 @@ function WardrobeBay({
         if (c.o.led.includes('raf'))
           ledBoards.push({ p: [0, y - 0.012, -depth / 2 + 0.025], s: [width - 0.05, 0.008, 0.015] })
       }
-      for (let shelf = 0; shelf <= Math.min(zone.count, props.lowQuality ? 0 : 2); shelf++)
+      for (let shelf = 0; shelf <= Math.min(zone.count, props.lowQuality ? 1 : 10); shelf++)
         place(
           zone.kind === 'shoes' ? 'bottom' : 'middle',
           bottom + (h * shelf) / (zone.count + 1) + 0.018,
@@ -107,6 +107,14 @@ function WardrobeBay({
         )
     }
     if (zone.kind === 'rail') place('hanging', bottom + 0.018, h - 0.018)
+    if (zone.kind === 'trousers') place('middle', bottom + h - 0.16, 0.16)
+    if (zone.kind === 'drawers' && drawer !== null && props.preferences.props && props.propsReady) {
+      placements.push(...fitProps(productPropSets.gardirop.drawer, {
+        x: 0, width: width - 0.08, bottom: bottom + h * drawer / zone.count + 0.04,
+        height: h / zone.count - 0.07, depth: innerDepth * 0.7 - 0.07,
+        cell: `wardrobe-drawer-${index}-${drawer}`, zone: 'drawer',
+      }, props.lowQuality).map((item): PropPlacement => ({ ...item, position: [item.position[0], item.position[1], innerDepth * 0.8 - 0.07] })))
+    }
   })
   if (wd.loft) {
     const bottom = (c.d.h - wd.loftHeight) / 100

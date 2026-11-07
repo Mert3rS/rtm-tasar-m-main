@@ -18,8 +18,8 @@ export function BathroomDrawing({
   const b = c.bathroom,
     g = bathroomGeometry(c)
   if (!b) return null
-  const scale = Math.min(540 / c.d.w, 495 / Math.max(g.top, human ? 180 : 0)),
-    ps = Math.min(285 / c.d.w, 220 / c.d.d),
+  const scale = Math.min(540 / g.totalWidth, 495 / Math.max(g.top, human ? 180 : 0)),
+    ps = Math.min(285 / g.totalWidth, 220 / c.d.d),
     x = 125,
     floor = 650,
     px = 835,
@@ -140,7 +140,7 @@ export function BathroomDrawing({
           ? g.sinks.map((unit) => {
               const w =
                   Math.min(
-                    unit.width * 0.85,
+                    (b.sideCabinet ? c.d.w : unit.width) * 0.85,
                     b.mirrorShape === 'round' ? b.upperHeight : b.upperHeight * 0.8,
                   ) * scale,
                 h = b.mirrorShape === 'round' ? w : b.upperHeight * scale,
@@ -168,6 +168,22 @@ export function BathroomDrawing({
               )
             })
           : null}
+        {g.sideCabinet ? (
+          <g aria-label="Sağ boy dolabı">
+            <rect x={x + (g.sideCabinet.x + c.d.w / 2 - g.sideCabinet.width / 2) * scale}
+              y={floor - (g.sideCabinet.bottom + g.sideCabinet.height) * scale}
+              width={g.sideCabinet.width * scale} height={g.sideCabinet.height * scale}
+              fill={surface} stroke={ink} />
+            <text x={x + (g.sideCabinet.x + c.d.w / 2) * scale}
+              y={floor - (g.sideCabinet.bottom + g.sideCabinet.height / 2) * scale} textAnchor="middle">
+              Boy dolabı
+            </text>
+            <text x={x + (g.sideCabinet.x + c.d.w / 2) * scale}
+              y={floor - (g.sideCabinet.bottom + g.sideCabinet.height) * scale - 12} textAnchor="middle">
+              {g.sideCabinet.width} × {g.sideCabinet.height} cm
+            </text>
+          </g>
+        ) : null}
         <rect
           x={x}
           y={floor - g.counter * scale}
@@ -232,7 +248,7 @@ export function BathroomDrawing({
           {c.d.h} cm alt dolap
         </text>
         <text x={x + (c.d.w * scale) / 2} y={floor + 65} textAnchor="middle">
-          {c.d.w} cm toplam genişlik
+          {c.d.w} cm lavabo ünitesi{b.sideCabinet ? ` / yerleşim ${g.totalWidth} cm` : ''}
         </text>
         <text x={x + c.d.w * scale + 12} y={floor - (g.counter + b.gap / 2) * scale}>
           {b.gap} cm ara
@@ -243,6 +259,10 @@ export function BathroomDrawing({
           </text>
         ) : null}
         <rect x={px} y={py} width={c.d.w * ps} height={c.d.d * ps} fill={surface} stroke={ink} />
+        {g.sideCabinet ? <rect
+          x={px + (g.sideCabinet.x + c.d.w / 2 - g.sideCabinet.width / 2) * ps}
+          y={py} width={g.sideCabinet.width * ps} height={g.sideCabinet.depth * ps}
+          fill={surface} stroke={ink} /> : null}
         {g.sinks.map((unit) => {
           const size = bathroomBasinSize(c, unit),
             cx = px + (unit.x + c.d.w / 2) * ps,

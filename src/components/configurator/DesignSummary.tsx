@@ -29,7 +29,10 @@ function TvSummary({ config: c, selection, onSelect }: { config: Config; selecti
 
 function BathroomSummary({ config: c, selection, onSelect }: { config: Config; selection?: BathroomSelection; onSelect?: (selection: BathroomSelection) => void }) {
   const g = bathroomGeometry(c)
-  return <>{(['lower', ...(c.bathroom?.upperEnabled ? ['upper' as const] : [])] satisfies BathroomSelection['row'][]).map((row) => <div className="dc-summary-section" key={row}><h3>{row === 'lower' ? 'Alt banyo dolapları' : 'Üst banyo dolapları'}</h3>{g[row].map((unit) => <button type="button" key={unit.index} aria-pressed={selection?.row === row && selection.index === unit.index} onClick={() => onSelect?.({ row, index: unit.index })}><span>{unit.index + 1}. bölme<small>{bathroomKindNames[unit.kind]}</small></span><span>{unit.width} cm</span></button>)}</div>)}</>
+  return <>
+    {(['lower', ...(c.bathroom?.upperEnabled ? ['upper' as const] : [])] satisfies BathroomSelection['row'][]).map((row) => <div className="dc-summary-section" key={row}><h3>{row === 'lower' ? 'Alt banyo dolapları' : 'Üst banyo dolapları'}</h3>{g[row].map((unit) => <button type="button" key={unit.index} aria-pressed={selection?.row === row && selection.index === unit.index} onClick={() => onSelect?.({ row, index: unit.index })}><span>{unit.index + 1}. bölme<small>{bathroomKindNames[unit.kind]}</small></span><span>{unit.width} cm</span></button>)}</div>)}
+    {g.sideCabinet ? <div className="dc-summary-section"><h3>Sağ boy dolabı</h3><p>{g.sideCabinet.width} × {g.sideCabinet.height} × {g.sideCabinet.depth} cm</p><small>Toplam yerleşim {g.totalWidth} cm</small></div> : null}
+  </>
 }
 
 function EntrywaySummary({ config: c, selected, onSelect }: { config: Config; selected: number; onSelect: (section: number, cell: number) => void }) {

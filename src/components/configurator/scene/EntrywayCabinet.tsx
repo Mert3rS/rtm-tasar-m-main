@@ -88,7 +88,7 @@ function EntryBay({
         if (c.o.led.includes('raf'))
           led.push({ p: [0, shelfY - 0.012, depth / 2 - 0.055], s: [width - 0.05, 0.008, 0.012] })
       }
-      for (let i = 0; i <= Math.min(zone.count, props.lowQuality ? 0 : 2); i++)
+      for (let i = 0; i <= Math.min(zone.count, props.lowQuality ? 1 : 10); i++)
         place(
           zone.kind === 'shoes' ? 'bottom' : 'middle',
           y + (h * i) / (zone.count + 1) + 0.018,
@@ -96,6 +96,13 @@ function EntryBay({
         )
     }
     if (zone.kind === 'hanging') place('hanging', y + 0.018, h - 0.02)
+    if (zone.kind === 'drawers' && drawer !== null && props.preferences.props && props.propsReady) {
+      placements.push(...fitProps(productPropSets.portmanto.drawer, {
+        x: 0, width: width - 0.08, bottom: y + h * drawer / zone.count + 0.04,
+        height: h / zone.count - 0.07, depth: depth * 0.7 - 0.04,
+        cell: `entry-drawer-${index}-${drawer}`, zone: 'drawer',
+      }, props.lowQuality).map((item): PropPlacement => ({ ...item, position: [item.position[0], item.position[1], depth * 0.8] })))
+    }
   }
   if (hooks && props.preferences.props && props.propsReady) {
     const flat = fitProps(

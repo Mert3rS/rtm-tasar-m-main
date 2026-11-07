@@ -4105,13 +4105,44 @@ html[data-scroll-behavior] {
   font-size: 12px;
 }
 
-.design-studio .site-dropdown__button {
-  height: 44px;
+.configurator-shell .design-studio .site-dropdown__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  height: auto;
   min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--studio-line);
   border-color: var(--studio-line);
-  border-radius: 10px;
+  border-radius: 7px;
   background: var(--studio-surface);
   color: var(--studio-text);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  cursor: pointer;
+}
+.design-studio .site-dropdown {
+  position: relative;
+  min-width: 0;
+  width: 100%;
+}
+.design-studio .site-dropdown__button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.design-studio .site-dropdown__button svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  color: var(--studio-muted);
+  transform: rotate(0);
+}
+.design-studio .site-dropdown--open .site-dropdown__button svg {
+  transform: rotate(180deg);
 }
 
 .design-studio .site-dropdown__button:hover,

@@ -121,7 +121,7 @@ test('independent sliding panels, mirrors and mobile controls preserve the desig
     .poll(() => decode(new URL(page.url()).hash).wardrobe?.slidingDoors)
     .toEqual(['glass', 'mirror', 'solid'])
   await page.screenshot({ path: '.tools/wardrobe-qa/sliding-mirror.png' })
-  await page.getByRole('button', { name: 'Kapakları aç / kapat', exact: true }).click()
+  await page.getByRole('button', { name: /Tüm kapakları (aç|kapat)/ }).click()
   await page.screenshot({ path: '.tools/wardrobe-qa/sliding-open.png' })
   await page.getByRole('button', { name: 'Geri al', exact: true }).click()
   await page.getByRole('button', { name: 'İleri al', exact: true }).click()

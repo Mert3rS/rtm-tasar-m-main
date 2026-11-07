@@ -79,6 +79,25 @@ describe('studio viewing preferences', () => {
 })
 
 describe('representative object placement', () => {
+  it('fits real dishes, narrow folded towels and low media objects without scaling them up', () => {
+    const region = { x: 0, bottom: 0, width: 0.56, height: 0.2, depth: 0.31, cell: 'DEMO-shelf', zone: 'middle' as const }
+    expect(fitProps(productPropSets.mutfak.top, region).map((item) => item.kind)).toContain('plates')
+    expect(fitProps(['glass', 'mug'], region).map((item) => item.kind)).toContain('glass')
+    expect(fitProps(productPropSets.banyo.top, { ...region, width: 0.28, height: 0.22 }).map((item) => item.kind)).toEqual(['handTowels'])
+    expect(fitProps(productPropSets.tv.bottom, { ...region, height: 0.15 }).map((item) => item.kind)).toContain('console')
+  })
+  it('reserves the turned clothes width and leaves space between hangers', () => {
+    const region = { x: 0, bottom: 0.3, width: 0.95, height: 1.5, depth: 0.54, cell: 'DEMO-rail', zone: 'hanging' as const }
+    const garments = fitProps(['shirt', 'coat'], region)
+    expect(garments.length).toBeGreaterThan(1)
+    garments.forEach((item, index) => {
+      expect(item.rotation).toBeLessThan(Math.PI / 2)
+      expect(item.position[0] - item.size[0] / 2).toBeGreaterThan(-region.width / 2)
+      expect(item.position[0] + item.size[0] / 2).toBeLessThan(region.width / 2)
+      expect(item.size[2] + 0.05).toBeLessThan(region.depth)
+      if (index) expect(item.position[0] - item.size[0] / 2).toBeGreaterThan(garments[index - 1].position[0] + garments[index - 1].size[0] / 2)
+    })
+  })
   it('keeps every real mesh inside its declared physical bounding box', () => {
     const kinds = new Set(
       Object.values(productPropSets).flatMap((sets) => Object.values(sets).flat()),
@@ -86,7 +105,7 @@ describe('representative object placement', () => {
     kinds.add('tv')
     kinds.add('soundbar')
     for (const kind of kinds)
-      for (const part of propRecipe(kind)) {
+      for (const part of [0, 1, 2, 3].flatMap((variant) => propRecipe(kind, variant))) {
         const geometry = createPropGeometry(part.form)
         geometry.computeBoundingBox()
         const transform = new Object3D()

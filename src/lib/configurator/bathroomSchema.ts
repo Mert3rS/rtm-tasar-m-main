@@ -45,6 +45,15 @@ export const bathroomSchema = z
     mirrorLed: z.boolean(),
     splashback: z.boolean(),
     towelRail: z.boolean(),
+    sideCabinet: z
+      .object({
+        width: z.number().finite().min(30).max(60),
+        height: z.number().finite().min(100).max(180),
+        depth: z.number().finite().min(20).max(40),
+        gap: z.number().finite().min(10).max(40),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .refine(

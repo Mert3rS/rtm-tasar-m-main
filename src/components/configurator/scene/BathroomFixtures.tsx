@@ -43,12 +43,14 @@ function CeramicBasin({ config: c, unit }: { config: Config; unit: BathroomUnit 
     const profile = vessel
       ? [
           [0.7, 0.005],
-          [0.95, 0.1],
+          [0.83, 0.018],
+          [0.94, 0.045],
+          [0.99, 0.08],
           [1, 0.12],
           [0.94, 0.12],
-          [0.81, 0.065],
-          [0.58, 0.014],
-          [0, 0.014],
+          [0.89, 0.07],
+          [0.7, 0.025],
+          [0, 0.025],
         ]
       : [
           [1, 0.002],
@@ -61,7 +63,7 @@ function CeramicBasin({ config: c, unit }: { config: Config; unit: BathroomUnit 
       for (const [x, z] of outline) {
         vertices.push(x * radius, y, z * radius)
         const shade = (
-          vessel ? [0.94, 0.98, 1, 0.96, 0.73, 0.66, 0.76] : [1, 0.98, 0.75, 0.63, 0.72]
+          vessel ? [0.94, 0.96, 0.98, 1, 1, 0.96, 0.83, 0.72, 0.78] : [1, 0.98, 0.75, 0.63, 0.72]
         )[ring]
         vertexColors.push(shade, shade, shade)
       }
@@ -190,7 +192,10 @@ export function BathroomFixtures({ config: c }: { config: Config }) {
     )
   return (
     <group name="bathroom-fixtures">
-      <mesh
+      {c.o.tezgah === 'laminat' ? (
+        <Boards color={palette['acik-mese'].hex} wood roughness={0.55}
+          items={[{ p: [0, top - 0.01, 0], s: [width + 0.02, 0.02, depth + 0.03] }]} />
+      ) : <mesh
         geometry={geometry}
         position={[0, top - 0.02, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -198,7 +203,7 @@ export function BathroomFixtures({ config: c }: { config: Config }) {
         receiveShadow
       >
         <meshPhysicalMaterial color={counterColor} roughness={0.25} clearcoat={0.5} />
-      </mesh>
+      </mesh>}
       {g.sinks.map((unit) => (
         <CeramicBasin key={unit.index} config={c} unit={unit} />
       ))}

@@ -47,16 +47,17 @@ export function fitProps(
     if (!kind || (lowQuality && result.length >= 1) || result.length >= 5) break
     const hanging = region.zone === 'hanging'
     const originalSize = propSizes[kind]
+    const rotation = hanging ? Math.PI * 0.38 : undefined
     const size: [number, number, number] = hanging
-      ? [originalSize[2], originalSize[1], originalSize[0]]
+      ? [originalSize[0] * Math.cos(Math.PI * 0.38) + originalSize[2] * Math.sin(Math.PI * 0.38), originalSize[1], originalSize[0] * Math.sin(Math.PI * 0.38) + originalSize[2] * Math.cos(Math.PI * 0.38)]
       : originalSize
     const [w, h, d] = size
-    // 44 cm hangers face along the depth, spaced along the horizontal rail.
+    // Slightly turned hangers reveal the garments; reserve their rotated physical bounds.
     const occupiedWidth = w
     if (
-      h + (hanging ? 0.14 : 0.04) > region.height ||
-      d + 0.05 > region.depth ||
-      w + 0.05 > region.width
+      h + (hanging ? 0.14 : 0.04) > region.height + 1e-8 ||
+      d + 0.05 > region.depth + 1e-8 ||
+      w + 0.05 > region.width + 1e-8
     )
       continue
     if (left + (hanging ? w : occupiedWidth) > right) continue
@@ -65,7 +66,7 @@ export function fitProps(
       kind,
       size: [...size],
       cell: region.cell,
-      rotation: hanging ? Math.PI / 2 : undefined,
+      rotation,
       position: [
         x,
         hanging ? region.bottom + region.height - 0.12 - h / 2 : region.bottom + 0.018 + h / 2,
@@ -73,6 +74,11 @@ export function fitProps(
       ],
     })
     left += occupiedWidth + 0.035
+  }
+  if (result.length) {
+    const first = result[0], last = result[result.length - 1]
+    const center = (first.position[0] - first.size[0] / 2 + last.position[0] + last.size[0] / 2) / 2
+    for (const item of result) item.position[0] += region.x - center
   }
   return result
 }

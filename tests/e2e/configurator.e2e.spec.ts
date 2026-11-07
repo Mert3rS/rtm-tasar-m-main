@@ -217,7 +217,7 @@ test('WebGL renders on demand, survives theme changes and exports PNG', async ({
   await page.getByRole('button', { name: 'Koyu temaya geç', exact: true }).click()
   expect(await canvas.evaluate((node, original) => node === original, original)).toBe(true)
   await page.screenshot({ path: 'test-results/configurator-3d-dark.png' })
-  await page.getByRole('button', { name: 'Kapakları aç / kapat' }).click()
+  await page.getByRole('button', { name: /Tüm kapakları (aç|kapat)/ }).click()
   await page.waitForTimeout(2000)
   const before = await page.evaluate(() => Number(Reflect.get(window, 'rtmTestDraws')))
   await page.waitForTimeout(700)
@@ -466,8 +466,8 @@ test('reduced motion disables decorative transitions and preserves the canvas ac
         .evaluate((node) => getComputedStyle(node).animationName),
     ).toBe('none')
   }
-  await page.getByRole('button', { name: 'Kapakları aç / kapat' }).click()
-  await expect(page.getByRole('button', { name: 'Kapakları aç / kapat' })).toHaveAttribute(
+  await page.getByRole('button', { name: /Tüm kapakları (aç|kapat)/ }).click()
+  await expect(page.getByRole('button', { name: /Tüm kapakları (aç|kapat)/ })).toHaveAttribute(
     'aria-pressed',
     'true',
   )

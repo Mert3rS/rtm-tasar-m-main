@@ -37,6 +37,7 @@ import { TvCabinet } from './TvCabinet'
 import { tvGeometry, tvFocus } from '@/lib/configurator/tv'
 import type { TvSelection } from '@/lib/configurator/tvSchema'
 import { BathroomCabinet } from './BathroomCabinet'
+import { BathroomRoom } from './BathroomRoom'
 import { bathroomGeometry, bathroomFocus } from '@/lib/configurator/bathroom'
 import type { BathroomSelection } from '@/lib/configurator/bathroomSchema'
 import { EntrywayCabinet } from './EntrywayCabinet'
@@ -225,7 +226,7 @@ function Cabinet(props: SceneProps & { lowQuality: boolean; propsReady: boolean 
         .filter((p) => {
           if (p.cell === 'surface') return true
           const [s, i] = p.cell.split('-').map(Number)
-          return open || c.r.main.g[s].f[i] === 'acik' || openCells.has(`${c.m}-${p.cell}`)
+          return open || c.r.main.g[s].f[i] === 'acik' || c.r.main.g[s].f[i] === 'cam' || openCells.has(`${c.m}-${p.cell}`)
         })
         .map((p): PropPlacement => {
           if (p.cell === 'surface') return p
@@ -718,6 +719,7 @@ function SceneContent({
 }: SceneProps & { lowQuality: boolean; onSlow: () => void }) {
   const colors = useSceneColors()
   const { config: c } = props
+  const bathroom = c.bathroom ? bathroomGeometry(c) : undefined
   const kitchenTarget =
     props.kitchenFocus && c.k
       ? kitchenCameraFocus(c, props.kitchenSelection ?? { row: 'lower', index: props.selected })
@@ -801,16 +803,16 @@ function SceneContent({
         <PerspectiveCamera makeDefault fov={36} />
       )}
       <CameraRig
-        centerX={focus?.x}
+        centerX={focus?.x ?? (bathroom ? bathroom.centerX / 100 : undefined)}
         centerY={focus?.y}
         front={props.front}
         zoom={props.zoom}
         reset={props.reset}
         centerZ={focus?.z ?? (c.k && c.k.layout !== 'straight' ? (c.k.length - c.d.d) / 200 : 0)}
-        side={c.k?.layout === 'right' ? -1 : 1}
+        side={c.bathroom ? 0.3 : c.k?.layout === 'right' ? -1 : 1}
         w={
           focus?.width ??
-          c.d.w / 100 +
+          (bathroom?.totalWidth ?? c.d.w) / 100 +
             (c.k && c.k.layout !== 'straight' ? c.k.length / 130 : c.d.d / 200) +
             (props.human ? 1.1 : 0) +
             (props.dimensions ? 0.3 : 0)
@@ -826,7 +828,7 @@ function SceneContent({
           )
         }
       />
-      <Room depth={c.d.d / 100} preferences={props.preferences} />
+      {c.bathroom ? <BathroomRoom config={c} preferences={props.preferences} lowQuality={lowQuality} /> : <Room depth={c.d.d / 100} preferences={props.preferences} />}
       <ContactShadows
         key={`${c.m}-${c.d.w}-${c.d.h}-${c.d.d}-${c.o.baza}`}
         position={[0, 0.002, 0]}

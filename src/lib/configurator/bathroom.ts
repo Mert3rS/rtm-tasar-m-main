@@ -81,13 +81,29 @@ export function bathroomGeometry(c: Config) {
       edge += width
     })
   }
+  const sideCabinet: BathroomUnit | undefined = b?.sideCabinet
+    ? {
+        row: 'upper', index: 0, kind: 'door',
+        x: c.d.w / 2 + b.sideCabinet.gap + b.sideCabinet.width / 2,
+        width: b.sideCabinet.width, height: b.sideCabinet.height,
+        depth: b.sideCabinet.depth, bottom: offset,
+        z: -c.d.d / 2 + b.sideCabinet.depth / 2,
+        shelves: 3, drawers: 0, glass: 'fume',
+      }
+    : undefined
+  const totalWidth = c.d.w + (b?.sideCabinet ? b.sideCabinet.gap + b.sideCabinet.width : 0)
   return {
     lower,
     upper,
+    sideCabinet,
+    totalWidth,
+    centerX: (totalWidth - c.d.w) / 2,
     offset,
     counter,
-    top: counter + (b?.gap ?? 0) + (b?.upperHeight ?? 0),
-    sinks: lower.filter((unit) => unit.kind === 'sink'),
+    top: Math.max(counter + (b?.gap ?? 0) + (b?.upperHeight ?? 0), sideCabinet ? sideCabinet.bottom + sideCabinet.height : 0),
+    sinks: lower.filter((unit) => unit.kind === 'sink').map((unit) =>
+      b?.sideCabinet && b.lower.filter((kind) => kind === 'sink').length === 1 ? { ...unit, x: 0 } : unit,
+    ),
   }
 }
 export function normalizeBathroomSelection(
@@ -280,6 +296,7 @@ export function bathroomDetails(c: Config): [string, string][] {
           ],
         ] satisfies [string, string][])
       : []),
+    ...(b.sideCabinet ? ([['Boy dolabı', `${b.sideCabinet.width} × ${b.sideCabinet.height} × ${b.sideCabinet.depth} cm · Sağda / ${b.sideCabinet.gap} cm ara · 3 raf · Toplam yerleşim genişliği ${g.totalWidth} cm`]] satisfies [string, string][]) : []),
     [
       'Banyo detayları',
       `${b.mirrorLed ? 'Ayna çevresi LED' : 'Ayna LED yok'} · ${b.splashback ? 'Tezgâh arkası panel' : 'Arka panel yok'} · ${b.towelRail ? 'Havluluk' : 'Havluluk yok'}`,
@@ -403,7 +420,7 @@ export function applyBathroomStyle(c: Config, id: string) {
 }
 export function applyBathroomPreset(c: Config, preset: 'reference' | 'compact' | 'double') {
   if (c.m !== 'banyo') return
-  const widths = preset === 'double' ? [80, 80] : preset === 'compact' ? [80] : [100]
+  const widths = preset === 'double' ? [80, 80] : preset === 'compact' ? [80] : [68, 32]
   c.d = { w: sum(widths), h: 50, d: preset === 'compact' ? 45 : 52 }
   c.o.baza = 'asma'
   c.o.acilim = 'mentese'
@@ -420,7 +437,7 @@ export function applyBathroomPreset(c: Config, preset: 'reference' | 'compact' |
   c.bathroom.lower = widths.map(() => 'sink')
   c.bathroom.drawers = widths.map(() => 2)
   c.bathroom.shelves = widths.map(() => 1)
-  const upperWidths = preset === 'compact' ? [80] : widths.length === 1 ? [50, 50] : widths
+  const upperWidths = preset === 'compact' ? [80] : preset === 'reference' ? [50, 50] : widths
   c.bathroom.upper = {
     w: upperWidths,
     lk: upperWidths.map(() => false),
@@ -436,5 +453,16 @@ export function applyBathroomPreset(c: Config, preset: 'reference' | 'compact' |
   if (preset === 'compact') c.bathroom.basin = 'inset'
   c.o.camc = 'bronz'
   applyBathroomStyle(c, preset === 'reference' ? 'oak' : preset === 'double' ? 'walnut' : 'ivory')
+  if (preset === 'reference') {
+    c.bathroom.lower = ['sink', 'open']
+    c.bathroom.sinkFront = 'doors'
+    c.bathroom.upperEnabled = false
+    c.bathroom.mirrorShape = 'round'
+    c.bathroom.mirrorLed = false
+    c.bathroom.splashback = false
+    c.bathroom.towelRail = false
+    c.bathroom.sideCabinet = { width: 42, height: 140, depth: 30, gap: 20 }
+    Object.assign(c.o, { renk: 'antrasit', renk2: 'acik-mese', iki: false, km: 'duz', govde: 'ahsap', kulp: 'bas-ac', tezgah: 'laminat', led: [], ust: false })
+  }
   assertBathroomFits(c)
 }

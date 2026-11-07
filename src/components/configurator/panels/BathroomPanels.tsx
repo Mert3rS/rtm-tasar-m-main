@@ -66,7 +66,7 @@ export function BathroomStartPanel({ config: c, edit, onBathroomSelect }: PanelP
               {
                 id: 'reference',
                 name: 'Denge 100',
-                detail: 'Asma çekmeceler · oval lavabo · aynalı üst',
+                detail: 'Yuvarlak ayna · meşe & antrasit · açık raf · boy dolabı',
               },
               { id: 'compact', name: 'Kompakt 80', detail: 'Dar banyolar için sade ve kullanışlı' },
               {
@@ -181,6 +181,21 @@ export function BathroomStartPanel({ config: c, edit, onBathroomSelect }: PanelP
             <p className="dc-hint">
               Üst bölüm alt dolaptan bağımsızdır; toplam üst kot {g.top} cm.
             </p>
+          </FieldGroup>
+          <FieldGroup title="Sağ boy dolabı">
+            <Toggle label="Boy dolabını göster" checked={Boolean(b.sideCabinet)}
+              onChange={() => edit((draft) => setBathroomOption(draft, 'sideCabinet', b.sideCabinet ? undefined : { width: 42, height: 140, depth: 30, gap: 20 }))} />
+            {b.sideCabinet ? (['width', 'height', 'depth', 'gap'] as const).map((key) => (
+              <NumberField key={key}
+                label={{ width: 'Boy dolabı genişliği', height: 'Boy dolabı yüksekliği', depth: 'Boy dolabı derinliği', gap: 'Lavabo ünitesi ile arası' }[key]}
+                value={b.sideCabinet?.[key] ?? 0}
+                min={{ width: 30, height: 100, depth: 20, gap: 10 }[key]}
+                max={{ width: 60, height: 180, depth: 40, gap: 40 }[key]}
+                onChange={(value) => edit((draft) => {
+                  if (draft.bathroom?.sideCabinet) draft.bathroom.sideCabinet[key] = value
+                })} />
+            )) : null}
+            {b.sideCabinet ? <p className="dc-hint">Lavabo ünitesi {c.d.w} cm · boy dolabı ve ara ile toplam {g.totalWidth} cm.</p> : null}
           </FieldGroup>
         </>
       ) : (

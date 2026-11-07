@@ -76,7 +76,7 @@ function TvBay({ unit, ...props }: TvSceneProps & { unit: TvUnit }) {
       }
     if (props.propsReady && props.preferences.props && open && unit.kind !== 'drawers')
       for (let i = 0; i <= Math.min(unit.shelves, props.lowQuality ? 0 : 3); i++) {
-        const candidates = upper ? productPropSets.tv.top : productPropSets.tv.middle
+        const candidates = upper ? productPropSets.tv.top : [...productPropSets.tv.bottom, ...productPropSets.tv.middle]
         const contents = [
           ...candidates.slice(i % candidates.length),
           ...candidates.slice(0, i % candidates.length),
@@ -103,6 +103,16 @@ function TvBay({ unit, ...props }: TvSceneProps & { unit: TvUnit }) {
           p: [side * (width / 2 - 0.025), bottom + height / 2, -depth / 2 + 0.025],
           s: [0.008, height - 0.05, 0.012],
         })
+  }
+  if (props.propsReady && props.preferences.props && unit.kind === 'drawers') {
+    for (let i = 0; i < unit.drawers; i++) {
+      if (!props.open && drawer !== i) continue
+      placements.push(...fitProps(productPropSets.tv.drawer, {
+        x: 0, width: width - 0.08, bottom: bottom + height * i / unit.drawers + 0.04,
+        height: height / unit.drawers - 0.07, depth: depth * 0.7 - 0.04,
+        cell: `tv-drawer-${unit.index}-${i}`, zone: 'drawer',
+      }, props.lowQuality).map((item): PropPlacement => ({ ...item, position: [item.position[0], item.position[1], depth * 0.8] })))
+    }
   }
   const options = { ...c.o, renk: key, ral: upper && c.o.iki ? '' : c.o.ral, camt: unit.glass }
   const leaves = Math.ceil(unit.width / 65)

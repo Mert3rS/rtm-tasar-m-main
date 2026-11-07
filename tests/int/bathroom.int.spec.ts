@@ -21,6 +21,20 @@ import { validateInquiry } from '@/lib/contactValidation'
 import { designShareKey } from '@/lib/designShares'
 
 describe('Advanced bathroom', () => {
+  it('keeps the reference mirror, open shelf and separate tall cabinet in the shared design', () => {
+    const c = defaultConfig('banyo')
+    applyBathroomPreset(c, 'reference')
+    const g = bathroomGeometry(c)
+    expect(c.bathroom?.lower).toEqual(['sink', 'open'])
+    expect(c.bathroom?.mirrorShape).toBe('round')
+    expect(c.bathroom?.upperEnabled).toBe(false)
+    expect(g.sideCabinet).toMatchObject({ width: 42, height: 140, depth: 30, bottom: 35 })
+    expect(g.sideCabinet && g.sideCabinet.x - g.sideCabinet.width / 2).toBe(c.d.w / 2 + 20)
+    expect(g.totalWidth).toBe(162)
+    expect(decode(encode(c))).toEqual(c)
+    expect(designMessage(c, 'https://rtm.example/t/DEMO')).toContain('42 × 140 × 30 cm')
+    expect(configSchema.safeParse({ ...c, bathroom: { ...c.bathroom, sideCabinet: { width: 2, height: 140, depth: 30, gap: 20 } } }).success).toBe(false)
+  })
   it.each(['reference', 'compact', 'double'] as const)(
     'validates the %s preset with consistent counter and wall geometry',
     (preset) => {

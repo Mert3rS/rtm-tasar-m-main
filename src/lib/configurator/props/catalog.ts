@@ -38,6 +38,10 @@ export type PropKind =
   | 'tv'
   | 'soundbar'
   | 'books'
+  | 'booksHorizontal'
+  | 'candle'
+  | 'handTowels'
+  | 'soapSet'
   | 'vase'
   | 'sculpture'
   | 'plant'
@@ -54,7 +58,7 @@ export const productPropSets: Record<Config['m'], Record<PropZone, PropKind[]>> 
   mutfak: {
     hanging: [],
     drawer: ['cutlery'],
-    top: ['plates', 'bowls', 'glass', 'mug'],
+    top: ['plates', 'glass', 'mug', 'bowls'],
     middle: ['jar', 'spices', 'bottle'],
     bottom: ['pot', 'pan', 'board', 'trays'],
   },
@@ -69,28 +73,28 @@ export const productPropSets: Record<Config['m'], Record<PropZone, PropKind[]>> 
     hanging: ['jacket', 'bag'],
     drawer: ['keyBowl', 'entryBasket'],
     top: ['hat', 'scarf'],
-    middle: ['keyBowl', 'entryBasket'],
+    middle: ['bag', 'scarf', 'keyBowl', 'entryBasket'],
     bottom: ['shoes', 'boots'],
   },
   banyo: {
     hanging: [],
     drawer: ['grooming'],
-    top: ['towels', 'towelRolls'],
-    middle: ['lotion', 'pump', 'toothbrush'],
+    top: ['towels', 'handTowels', 'towelRolls'],
+    middle: ['soapSet', 'pump', 'lotion', 'toothbrush'],
     bottom: ['bathBasket', 'paperRolls'],
   },
   tv: {
     hanging: [],
     drawer: ['remote', 'mediaBox'],
-    top: ['books', 'vase', 'sculpture', 'plant'],
-    middle: ['books', 'plant', 'vase'],
-    bottom: ['console', 'mediaBox'],
+    top: ['books', 'vase', 'sculpture', 'plant', 'booksHorizontal', 'candle'],
+    middle: ['booksHorizontal', 'plant', 'vase', 'candle'],
+    bottom: ['console', 'mediaBox', 'booksHorizontal'],
   },
   ozel: {
     hanging: ['hanger'],
     drawer: ['storageBox', 'blankets'],
     top: ['storageBox', 'folders'],
-    middle: ['books', 'blankets', 'basket'],
+    middle: ['books', 'blankets', 'basket', 'booksHorizontal', 'vase'],
     bottom: ['basket', 'folders'],
   },
 }
@@ -123,6 +127,8 @@ export const propSizes: Record<PropKind, [number, number, number]> = {
   keyBowl: [0.16, 0.045, 0.13],
   entryBasket: [0.24, 0.16, 0.22],
   towels: [0.3, 0.18, 0.28],
+  handTowels: [0.21, 0.13, 0.2],
+  soapSet: [0.19, 0.135, 0.12],
   towelRolls: [0.29, 0.1, 0.24],
   lotion: [0.07, 0.22, 0.07],
   pump: [0.085, 0.19, 0.075],
@@ -133,9 +139,11 @@ export const propSizes: Record<PropKind, [number, number, number]> = {
   tv: [1.1, 0.64, 0.08],
   soundbar: [0.6, 0.055, 0.08],
   books: [0.2, 0.25, 0.18],
+  booksHorizontal: [0.25, 0.085, 0.18],
+  candle: [0.09, 0.12, 0.09],
   vase: [0.13, 0.22, 0.13],
   sculpture: [0.14, 0.18, 0.11],
-  plant: [0.21, 0.3, 0.21],
+  plant: [0.14, 0.22, 0.14],
   console: [0.3, 0.075, 0.23],
   mediaBox: [0.18, 0.06, 0.15],
   remote: [0.06, 0.025, 0.19],

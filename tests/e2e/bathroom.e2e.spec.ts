@@ -1,5 +1,10 @@
 import { expect, test, type Page } from '@playwright/test'
-import { decode } from '../../src/lib/configurator/config'
+import { decode, defaultConfig, encode } from '../../src/lib/configurator/config'
+
+async function choose(page: Page, label: string, option: string) {
+  await page.getByRole('combobox', { name: label, exact: true }).click()
+  await page.getByRole('option', { name: option, exact: true }).click()
+}
 
 async function openBathroom(page: Page) {
   await page.setViewportSize({ width: 1440, height: 1000 })
@@ -23,6 +28,35 @@ async function openBathroom(page: Page) {
   if (await page.locator('.dc-workspace.dc-panel-hidden').count())
     await page.getByRole('button', { name: 'Seçenekler paneli', exact: true }).click()
 }
+test('reference bathroom keeps round mirror, oak frame and adjustable tall cabinet through drawing and sharing', async ({ page }) => {
+  test.setTimeout(120000)
+  const errors: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  await openBathroom(page)
+  await page.getByRole('button', { name: /Denge 100/ }).click()
+  await expect.poll(() => decode(new URL(page.url()).hash).bathroom?.lower).toEqual(['sink', 'open'])
+  await expect(page.getByRole('combobox', { name: 'Duvar aynası biçimi', exact: true })).toContainText('Yuvarlak ayna')
+  await page.getByRole('button', { name: 'Önden', exact: true }).click()
+  await page.screenshot({ path: '.tools/bathroom-qa/reference-modern-front.png' })
+  const height = page.getByRole('spinbutton', { name: 'Boy dolabı yüksekliği', exact: true })
+  await height.fill('150')
+  await height.press('Enter')
+  await expect.poll(() => decode(new URL(page.url()).hash).bathroom?.sideCabinet?.height).toBe(150)
+  await page.getByRole('button', { name: 'Teknik çizim', exact: true }).click()
+  await expect(page.locator('.dc-technical.visible')).toContainText('Boy dolabı')
+  await expect(page.locator('.dc-technical.visible')).toContainText('42 × 150 cm')
+  const shared = decode(new URL(page.url()).hash)
+  await page.reload()
+  await expect.poll(() => decode(new URL(page.url()).hash)).toEqual(shared)
+  await expect(page.locator('.dc-scene canvas')).toHaveAttribute('aria-label', 'Etkileşimli dolap önizlemesi', { timeout: 30000 })
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  await page.screenshot({ path: '.tools/bathroom-qa/reference-modern-mobile.png' })
+  await page.locator('.dc-quote-action').click()
+  await expect(page.locator('#quote-design-details')).toContainText('42 × 150 × 30 cm')
+  expect(errors).toEqual([])
+})
+
 test('bathroom vanity, independent upper cabinets and ceramic basin survive drawing, PDF and quote', async ({
   page,
 }) => {
@@ -35,6 +69,9 @@ test('bathroom vanity, independent upper cabinets and ceramic basin survive draw
   await page.getByRole('button', { name: /Denge 100/ }).click()
   await expect.poll(() => decode(new URL(page.url()).hash).bathroom?.upper.w).toEqual([50, 50])
   await page.screenshot({ path: '.tools/bathroom-qa/reference.png' })
+  // Retain coverage of older shared designs as well as the new reference composition.
+  await page.evaluate((hash) => { window.location.hash = hash }, `c=${encode(defaultConfig('banyo'))}`)
+  await expect.poll(() => decode(new URL(page.url()).hash).r.main.w).toEqual([100])
   const width = page.getByRole('spinbutton', { name: 'Genişlik', exact: true })
   await width.fill('140')
   await width.press('Enter')
@@ -70,23 +107,21 @@ test('bathroom vanity, independent upper cabinets and ceramic basin survive draw
   await expect.poll(() => decode(new URL(page.url()).hash).bathroom?.upper.w).toEqual([60, 60, 60])
   await page.locator('.dc-steps button').nth(2).click()
   await page.getByRole('button', { name: 'Cam vitrin', exact: true }).click()
-  await page.getByRole('combobox', { name: 'Banyo cam tipi', exact: true }).selectOption('yivli')
-  await page.getByRole('combobox', { name: 'Banyo raf sayısı', exact: true }).selectOption('3')
+  await choose(page, 'Banyo cam tipi', 'Yivli')
+  await choose(page, 'Banyo raf sayısı', '3')
   await page.getByRole('button', { name: 'Sonraki banyo bölmesi', exact: true }).click()
   await page.getByRole('button', { name: 'Kapaklı', exact: true }).click()
   await page
     .getByRole('group', { name: 'Banyo dolap sırası', exact: true })
     .getByRole('button', { name: 'Alt dolaplar', exact: true })
     .click()
-  await page.getByRole('combobox', { name: 'Banyo çekmece sayısı', exact: true }).selectOption('3')
+  await choose(page, 'Banyo çekmece sayısı', '3')
   await page.getByRole('button', { name: 'Sonraki banyo bölmesi', exact: true }).click()
   await page.getByRole('button', { name: 'Açık raf', exact: true }).click()
-  await page.getByRole('combobox', { name: 'Banyo raf sayısı', exact: true }).selectOption('2')
+  await choose(page, 'Banyo raf sayısı', '2')
   await page.locator('.dc-steps button').nth(3).click()
   await page.getByRole('button', { name: /Adaçayı spa/ }).click()
-  await page
-    .getByRole('combobox', { name: 'Banyo cam çerçevesi', exact: true })
-    .selectOption('bronz')
+  await choose(page, 'Banyo cam çerçevesi', 'Bronz')
   await page.getByRole('button', { name: 'Bölmeye yaklaş', exact: true }).click()
   await expect(
     page.getByRole('button', { name: 'Tüm banyoyu göster', exact: true }),
@@ -131,9 +166,7 @@ test('bathroom double vessel basins, wall mirrors and washer layout work on mobi
     .toEqual(['sink', 'sink'])
   await page.screenshot({ path: '.tools/bathroom-qa/double.png' })
   await page.getByRole('checkbox', { name: 'Üst dolaplar', exact: true }).uncheck()
-  await page
-    .getByRole('combobox', { name: 'Duvar aynası biçimi', exact: true })
-    .selectOption('round')
+  await choose(page, 'Duvar aynası biçimi', 'Yuvarlak ayna')
   await page.screenshot({ path: '.tools/bathroom-qa/round-mirrors.png' })
   await page.setViewportSize({ width: 390, height: 844 })
   await expect
@@ -142,15 +175,13 @@ test('bathroom double vessel basins, wall mirrors and washer layout work on mobi
   if (await page.locator('.dc-workspace[data-snap="closed"]').count())
     await page.getByRole('button', { name: 'Seçenekler paneli', exact: true }).click()
   await expect(page.getByRole('checkbox', { name: 'Üst dolaplar', exact: true })).not.toBeChecked()
-  await page
-    .getByRole('combobox', { name: 'Duvar aynası biçimi', exact: true })
-    .selectOption('capsule')
+  await choose(page, 'Duvar aynası biçimi', 'Kapsül ayna')
   await page
     .getByRole('combobox', { name: 'Duvar aynası biçimi', exact: true })
     .scrollIntoViewIfNeeded()
   await page.screenshot({ path: '.tools/bathroom-qa/mobile.png' })
   await page.setViewportSize({ width: 1440, height: 1000 })
-  await page.getByRole('button', { name: /Denge 100/ }).click()
+  await page.getByRole('button', { name: /Kompakt 80/ }).click()
   const width = page.getByRole('spinbutton', { name: 'Genişlik', exact: true })
   await width.fill('180')
   await width.press('Enter')

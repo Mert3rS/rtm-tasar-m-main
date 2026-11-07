@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import { configSchema, defaultConfig, decode, encode, type Config } from '@/lib/configurator/config'
 import { onConsentChange, safeStorage } from '@/lib/consent/storage'
+import { applyBathroomPreset } from '@/lib/configurator/bathroom'
 
 const DESIGN_KEY = 'rtm-design-v2'
 
@@ -109,7 +110,9 @@ export function useDesign() {
     canUndo: history.past.length > 0,
     canRedo: history.future.length > 0,
     reset: (m: Config['m'] = 'ozel') => {
-      dispatch({ type: 'edit', value: defaultConfig(m) })
+      const value = defaultConfig(m)
+      if (m === 'banyo') applyBathroomPreset(value, 'reference')
+      dispatch({ type: 'edit', value: configSchema.parse(value) })
       setResumed(false)
     },
   }

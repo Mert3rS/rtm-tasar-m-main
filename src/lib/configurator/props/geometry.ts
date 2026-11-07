@@ -5,13 +5,16 @@ import {
   TorusGeometry,
   Shape,
   ExtrudeGeometry,
+  LatheGeometry,
+  Vector2,
   type Matrix4,
   type BufferGeometry,
 } from 'three'
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import type { PropKind } from './catalog'
 
 type Vec = [number, number, number]
-export type Form = 'box' | 'cylinder' | 'sphere' | 'ring' | 'garment'
+export type Form = 'box' | 'softBox' | 'cylinder' | 'sphere' | 'ring' | 'garment' | 'dish' | 'bowl' | 'cup' | 'vessel' | 'leaf'
 export type Part = { form: Form; p: Vec; s: Vec; tone: number; rotation?: Vec; matrix?: Matrix4 }
 const part = (form: Form, p: Vec, s: Vec, tone = 0, rotation?: Vec): Part => ({
   form,
@@ -21,45 +24,45 @@ const part = (form: Form, p: Vec, s: Vec, tone = 0, rotation?: Vec): Part => ({
   rotation,
 })
 const box = (p: Vec, s: Vec, tone = 0) => part('box', p, s, tone)
+const soft = (p: Vec, s: Vec, tone = 0) => part('softBox', p, s, tone)
 const cyl = (p: Vec, s: Vec, tone = 0) => part('cylinder', p, s, tone)
 const ring = (p: Vec, s: Vec, tone = 0, rotation?: Vec) => part('ring', p, s, tone, rotation)
-const stack = (count: number, form: Form = 'box', tone = 0): Part[] =>
-  Array.from({ length: count }, (_, i) =>
-    part(form, [0, -0.5 + (i + 0.5) / count, 0], [0.94, 0.85 / count, 0.94], tone + (i % 2)),
-  )
 const bottle = (pump = false): Part[] => [
   cyl([0, -0.12, 0], [0.76, 0.74, 0.76]),
   cyl([0, 0.3, 0], [0.35, 0.16, 0.35], 2),
   box([pump ? 0.08 : 0, 0.43, 0], [pump ? 0.65 : 0.4, 0.12, 0.35], 2),
 ]
 const basket = (): Part[] => [
-  box([0, -0.45, 0], [1, 0.1, 1], 3),
+  soft([0, -0.45, 0], [0.98, 0.1, 0.98], 6),
   ...Array.from({ length: 7 }, (_, i) => [
-    box([0, -0.4 + i * 0.13, -0.46], [1, 0.07, 0.06], 3),
-    box([0, -0.4 + i * 0.13, 0.46], [1, 0.07, 0.06], 3),
-    box([-0.46, -0.4 + i * 0.13, 0], [0.06, 0.07, 1], 3),
-    box([0.46, -0.4 + i * 0.13, 0], [0.06, 0.07, 1], 3),
+    soft([0, -0.4 + i * 0.13, -0.46], [0.98, 0.065, 0.06], 6),
+    soft([0, -0.4 + i * 0.13, 0.46], [0.98, 0.065, 0.06], 6),
+    soft([-0.46, -0.4 + i * 0.13, 0], [0.06, 0.065, 0.98], 6),
+    soft([0.46, -0.4 + i * 0.13, 0], [0.06, 0.065, 0.98], 6),
   ]).flat(),
+  ...[-0.3, 0, 0.3].flatMap((x) => [box([x, 0, 0.465], [0.025, 0.86, 0.015], 3), box([x, 0, -0.465], [0.025, 0.86, 0.015], 3)]),
 ]
+const linen = (tone: number, count = 3): Part[] => Array.from({ length: count }, (_, i) => {
+  const y = -0.5 + (i + 0.5) / count
+  return [
+    soft([0, y, 0], [0.94 - i * 0.025, 0.85 / count, 0.94 - i * 0.025], i === 1 ? 0 : tone),
+    box([0, y - 0.06 / count, 0.465 - i * 0.0125], [0.82 - i * 0.025, 0.018 / count, 0.009], 1),
+    box([0.32, y, 0.47 - i * 0.0125], [0.012, 0.7 / count, 0.009], 1),
+  ]
+}).flat()
 
 /** Small reusable recipes in a unit bounding box; physical size comes from the catalog. */
-export function propRecipe(kind: PropKind): Part[] {
+export function propRecipe(kind: PropKind, variant = 0): Part[] {
+  const textile = [0, 5, 7, 6][variant % 4]
   switch (kind) {
     case 'plates':
-      return stack(4, 'cylinder')
+      return Array.from({ length: 5 }, (_, i) => part('dish', [0, -0.39 + i * 0.19, 0], [0.96, 0.18, 0.96], 0))
     case 'bowls':
-      return [0, 1, 2].flatMap((i) => [
-        cyl([0, -0.37 + i * 0.27, 0], [0.65 + i * 0.1, 0.18, 0.65 + i * 0.1]),
-        ring([0, -0.27 + i * 0.27, 0], [0.72 + i * 0.1, 0.72 + i * 0.1, 0.12], 0, [
-          Math.PI / 2,
-          0,
-          0,
-        ]),
-      ])
+      return [0, 1, 2].map((i) => part('bowl', [0, -0.2 + i * 0.2, 0], [0.78 + i * 0.08, 0.55, 0.78 + i * 0.08], i === 1 ? 5 : 0))
     case 'glass':
-      return [cyl([0, 0, 0], [0.85, 1, 0.85], 1), cyl([0, 0.49, 0], [0.65, 0.02, 0.65], 2)]
+      return [part('cup', [0, 0, 0], [0.9, 0.96, 0.9], 9), cyl([0, -0.46, 0], [0.76, 0.035, 0.76], 9)]
     case 'mug':
-      return [cyl([-0.1, 0, 0], [0.68, 0.9, 0.95]), ring([0.27, 0.03, 0], [0.48, 0.6, 0.7], 0)]
+      return [part('cup', [-0.1, 0, 0], [0.68, 0.9, 0.93], variant % 2 ? 5 : 0), ring([0.28, 0.02, 0], [0.46, 0.66, 0.5], variant % 2 ? 5 : 0)]
     case 'jar':
       return [
         cyl([0, -0.04, 0], [0.85, 0.88, 0.85], 1),
@@ -107,25 +110,34 @@ export function propRecipe(kind: PropKind): Part[] {
           'garment',
           [0, -0.02, 0],
           [0.96, 0.94, 0.85],
-          kind === 'jacket' ? 2 : kind === 'coat' ? 3 : 0,
+          kind === 'coat' ? (variant % 2 ? 6 : 7) : textile,
         ),
-        ring([0, 0.43, 0], [0.17, 0.13, 0.7], 2),
-        box([0, 0.31, 0], [0.72, 0.025, 0.16], 3),
+        ring([0, 0.44, 0], [0.13, 0.1, 0.25], 2),
+        part('box', [-0.17, 0.32, 0], [0.37, 0.018, 0.14], 3, [0, 0, 0.25]),
+        part('box', [0.17, 0.32, 0], [0.37, 0.018, 0.14], 3, [0, 0, -0.25]),
+        // Collar, placket and pockets remain legible when doors are opened.
+        part('softBox', [-0.07, 0.32, 0.39], [0.13, 0.13, 0.045], 1, [0, 0, 0.35]),
+        part('softBox', [0.07, 0.32, 0.39], [0.13, 0.13, 0.045], 1, [0, 0, -0.35]),
+        box([0, -0.03, 0.414], [0.016, 0.62, 0.015], 1),
+        ...[-0.22, -0.04, 0.14].map((y) => part('sphere', [0.012, y, 0.433], [0.02, 0.013, 0.025], 2)),
+        ...(kind !== 'hanger' ? [soft([0.13, 0.08, 0.42], [0.12, 0.13, 0.014], 1)] : []),
       ]
     case 'folded':
     case 'towels':
+    case 'handTowels':
     case 'blankets':
     case 'scarf':
-      return stack(3, 'box', kind === 'towels' ? 0 : 1)
+      return linen(kind === 'towels' || kind === 'handTowels' ? (variant % 2 ? 5 : 0) : textile)
     case 'trousers':
-      return [...stack(2), box([0, 0.02, 0.46], [0.025, 0.85, 0.02], 2)]
+      return [...linen(7, 2), box([0, 0.02, 0.46], [0.025, 0.85, 0.02], 2)]
     case 'shoes':
     case 'boots':
       return [-0.26, 0.26].flatMap((x) => [
-        box([x, -0.2, 0], [0.43, 0.5, 0.95], 2),
-        part('sphere', [x, -0.13, 0.19], [0.43, 0.48, 0.56], 1),
-        box([x, -0.46, 0], [0.44, 0.08, 0.98], 3),
-        ...(kind === 'boots' ? [box([x, 0.15, -0.25], [0.4, 0.7, 0.42], 2)] : []),
+        soft([x, -0.2, -0.01], [0.43, 0.5, 0.94], kind === 'boots' ? 6 : 0),
+        part('sphere', [x, -0.13, 0.19], [0.42, 0.48, 0.56], kind === 'boots' ? 6 : 0),
+        soft([x, -0.44, 0], [0.44, 0.1, 0.98], 1),
+        ...[-0.13, -0.03, 0.07].map((z) => box([x, 0.055, z], [0.29, 0.018, 0.022], 1)),
+        ...(kind === 'boots' ? [soft([x, 0.15, -0.25], [0.4, 0.68, 0.42], 6)] : []),
       ])
     case 'suitcase':
       return [
@@ -144,7 +156,7 @@ export function propRecipe(kind: PropKind): Part[] {
         ]),
       )
     case 'bag':
-      return [box([0, -0.12, 0], [0.95, 0.72, 0.85], 3), ring([0, 0.3, 0], [0.6, 0.4, 0.7], 2)]
+      return [soft([0, -0.12, 0], [0.94, 0.72, 0.85], 6), ring([0, 0.27, 0], [0.58, 0.45, 0.55], 6), box([0, 0.05, 0.432], [0.13, 0.08, 0.015], 10), box([0, -0.12, 0.435], [0.012, 0.6, 0.012], 1)]
     case 'hat':
       return [
         cyl([0, -0.4, 0], [1, 0.15, 1], 3),
@@ -164,6 +176,14 @@ export function propRecipe(kind: PropKind): Part[] {
       return bottle()
     case 'pump':
       return bottle(true)
+    case 'soapSet':
+      return [
+        soft([0, -0.43, 0], [0.96, 0.1, 0.92], 6),
+        cyl([-0.24, -0.06, 0], [0.35, 0.65, 0.65], 8),
+        box([-0.2, 0.35, 0], [0.33, 0.1, 0.22], 2),
+        soft([0.24, -0.2, 0.02], [0.34, 0.38, 0.62], 0),
+        box([-0.24, -0.04, 0.33], [0.2, 0.12, 0.009], 0),
+      ]
     case 'toothbrush':
       return [
         cyl([0, -0.18, 0], [0.94, 0.64, 0.94]),
@@ -193,28 +213,34 @@ export function propRecipe(kind: PropKind): Part[] {
         box(
           [-0.4 + i * 0.2, -0.03 + (i % 2) * 0.03, 0],
           [0.16, 0.91 - (i % 2) * 0.06, 0.95],
-          i % 4,
+          [7, 0, 5, 6, 1][i],
         ),
         box([-0.4 + i * 0.2, 0.27, 0.485], [0.1, 0.035, 0.015], 0),
       ]).flat()
+    case 'booksHorizontal':
+      return [0, 1, 2].flatMap((i) => [
+        soft([i % 2 ? 0.025 : -0.015, -0.33 + i * 0.31, 0], [0.93 - (i % 2) * 0.05, 0.27, 0.91], [6, 7, 5][i]),
+        box([i % 2 ? 0.025 : -0.015, -0.33 + i * 0.31, 0.46], [0.87 - (i % 2) * 0.05, 0.18, 0.012], 0),
+      ])
+    case 'candle':
+      return [part('cup', [0, -0.06, 0], [0.92, 0.86, 0.92], 8), cyl([0, 0.25, 0], [0.73, 0.06, 0.73], 0), box([0, 0.31, 0], [0.018, 0.08, 0.018], 2)]
     case 'vase':
-      return [
-        part('sphere', [0, -0.12, 0], [0.98, 0.72, 0.98], 1),
-        cyl([0, 0.26, 0], [0.4, 0.47, 0.4], 1),
-      ]
+      return [part('vessel', [0, 0, 0], [0.96, 0.98, 0.96], variant % 2 ? 8 : 0)]
     case 'sculpture':
       return [box([0, -0.44, 0], [0.9, 0.12, 0.9], 3), ring([0, 0.07, 0], [0.85, 0.85, 0.8], 1)]
     case 'plant':
       return [
-        cyl([0, -0.28, 0], [0.65, 0.43, 0.65], 3),
+        part('bowl', [0, -0.28, 0], [0.65, 0.43, 0.65], 8),
+        cyl([0, -0.12, 0], [0.5, 0.015, 0.5], 3),
         box([0, 0.06, 0], [0.04, 0.57, 0.04], 4),
         ...[-1, 1].flatMap((side) => [
-          part('sphere', [side * 0.21, 0.1, 0], [0.5, 0.18, 0.35], 4),
-          part('sphere', [side * 0.12, 0.35, 0], [0.38, 0.27, 0.3], 4),
+          part('leaf', [side * 0.21, 0.1, 0], [0.5, 0.18, 0.35], 4),
+          part('leaf', [side * 0.12, 0.35, 0], [0.38, 0.27, 0.3], 4),
+          part('leaf', [0, 0.23, side * 0.18], [0.18, 0.3, 0.4], 5),
         ]),
       ]
     case 'console':
-      return [box([0, 0, 0], [0.97, 0.9, 0.95], 0), box([0, 0.05, 0.48], [0.86, 0.08, 0.025], 2)]
+      return [soft([0, 0, 0], [0.97, 0.9, 0.95], 0), box([0, 0.05, 0.48], [0.86, 0.08, 0.025], 2), cyl([0.36, -0.12, 0.485], [0.025, 0.025, 0.015], 5)]
     case 'mediaBox':
       return [box([0, 0, 0], [0.95, 0.85, 0.95], 2), box([0, 0.1, 0.49], [0.4, 0.06, 0.015], 1)]
     case 'remote':
@@ -226,17 +252,28 @@ export function propRecipe(kind: PropKind): Part[] {
       ]
     case 'storageBox':
       return [
-        box([0, -0.04, 0], [0.96, 0.87, 0.96], 3),
-        box([0, 0.43, 0], [1, 0.14, 1], 1),
+        soft([0, -0.04, 0], [0.96, 0.87, 0.96], 6),
+        soft([0, 0.43, 0], [1, 0.14, 1], 1),
         box([0, 0.04, 0.49], [0.4, 0.2, 0.015], 0),
       ]
   }
 }
 export function createPropGeometry(form: Form): BufferGeometry {
   if (form === 'box') return new BoxGeometry(1, 1, 1)
-  if (form === 'cylinder') return new CylinderGeometry(0.5, 0.5, 1, 12)
-  if (form === 'sphere') return new SphereGeometry(0.5, 10, 6)
-  if (form === 'ring') return new TorusGeometry(0.38, 0.08, 5, 12)
+  if (form === 'softBox') return new RoundedBoxGeometry(1, 1, 1, 2, 0.08)
+  if (form === 'cylinder') return new CylinderGeometry(0.5, 0.5, 1, 20)
+  if (form === 'sphere' || form === 'leaf') return new SphereGeometry(0.5, 16, 10)
+  if (form === 'ring') return new TorusGeometry(0.38, 0.08, 8, 24)
+  if (form === 'dish' || form === 'bowl' || form === 'cup' || form === 'vessel') {
+    const profile = form === 'dish'
+      ? [[0, -0.45], [0.25, -0.45], [0.36, -0.28], [0.49, 0.24], [0.49, 0.4], [0.44, 0.43], [0.32, -0.04], [0, -0.1]]
+      : form === 'bowl'
+        ? [[0, -0.48], [0.22, -0.48], [0.34, -0.31], [0.45, 0.06], [0.49, 0.45], [0.45, 0.48], [0.39, 0.07], [0.28, -0.26], [0, -0.33]]
+        : form === 'cup'
+          ? [[0, -0.49], [0.36, -0.49], [0.42, -0.44], [0.48, 0.46], [0.46, 0.49], [0.43, 0.46], [0.37, -0.37], [0, -0.39]]
+          : [[0, -0.49], [0.3, -0.49], [0.44, -0.38], [0.49, -0.1], [0.43, 0.16], [0.23, 0.3], [0.21, 0.48], [0.16, 0.49], [0.16, 0.29], [0.33, 0.1], [0.38, -0.12], [0, -0.38]]
+    return new LatheGeometry(profile.map(([radius, height]) => new Vector2(radius, height)), 24)
+  }
   const shape = new Shape()
   shape.moveTo(-0.12, 0.48)
   for (const [x, y] of [
@@ -256,7 +293,7 @@ export function createPropGeometry(form: Form): BufferGeometry {
   ])
     shape.lineTo(x, y)
   shape.closePath()
-  const geometry = new ExtrudeGeometry(shape, { depth: 1, bevelEnabled: false })
-  geometry.translate(0, 0, -0.5)
+  const geometry = new ExtrudeGeometry(shape, { depth: 0.86, bevelEnabled: true, bevelSize: 0.006, bevelThickness: 0.05, bevelSegments: 2 })
+  geometry.translate(0, 0, -0.43)
   return geometry
 }
