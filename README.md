@@ -72,6 +72,7 @@ Payload yönetim paneli: [http://localhost:3000/admin](http://localhost:3000/adm
 | `PAYLOAD_SECRET` | Payload oturum ve token imzalama anahtarı; gizli tutulmalıdır |
 | `NEXT_PUBLIC_SERVER_URL` | Uygulamanın public adresi |
 | `SITE_URL` | Gerçek HTTPS production kökü; canonical ve sosyal paylaşım URL'leri için önceliklidir. Yerelde boş bırakın. |
+| `BLOB_READ_WRITE_TOKEN` | Production medya yüklemelerini Vercel Blob'da kalıcı tutar; Vercel Blob bağlantısı tarafından sağlanır ve gizli tutulmalıdır |
 
 `.env` Git tarafından yok sayılır. Gerçek sırları `.env.example` dosyasına yazmayın.
 
@@ -841,6 +842,8 @@ Paylaşılabilir yerel çıktılar `.tools/phase8.3-qa/` altında korunmuştur: 
 - Node.js sunucusu ve erişilebilir bir PostgreSQL servisi gerekir.
 - `DATABASE_URI`, `PAYLOAD_SECRET` ve `NEXT_PUBLIC_SERVER_URL` platformun secret/environment yönetiminde tanımlanmalıdır.
 - Production öncesi migration'lar çalıştırılmalıdır.
-- `/media` yerel dosya sistemi yerine kalıcı, S3 uyumlu bir obje depolamaya taşınmalıdır.
+- `20261107_144050_vercel_blob_media` migration'ı Media kayıtlarına yalnızca Blob nesne anahtarı alanlarını ekler; mevcut medya kaydını veya dosyayı silmez.
+- Public `media` koleksiyonu `BLOB_READ_WRITE_TOKEN` bulunduğunda Vercel Blob kullanır ve tarayıcıdan doğrudan yükleme ile Vercel'in sunucu yükleme sınırını aşmaz. Yerelde token yoksa mevcut yerel depolama devam eder.
+- Private `inquiry-attachments` public Blob'a bağlanmamıştır. Teklif eki özelliği açılmadan önce yetkili indirmeyi koruyan kalıcı private storage tasarlanmalıdır.
 - HTTPS kullanılmalı; veritabanı ve yönetim sırları repoya eklenmemelidir.
 # rtm-tasar-m-main

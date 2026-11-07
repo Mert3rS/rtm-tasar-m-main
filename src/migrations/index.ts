@@ -6,6 +6,7 @@ import * as migration_20261029_160902_phase7_corporate_catalog from './20261029_
 import * as migration_20261031_203910_phase8_furniture_configurator from './20261031_203910_phase8_furniture_configurator'
 import * as migration_20261105_093608_phase9_10_assistant_consent from './20261105_093608_phase9_10_assistant_consent'
 import * as migration_20261105_215849_phase8_3_design_quote from './20261105_215849_phase8_3_design_quote'
+import * as migration_20261107_144050_vercel_blob_media from './20261107_144050_vercel_blob_media'
 
 export const migrations = [
   {
@@ -47,5 +48,10 @@ export const migrations = [
     up: migration_20261105_215849_phase8_3_design_quote.up,
     down: migration_20261105_215849_phase8_3_design_quote.down,
     name: '20261105_215849_phase8_3_design_quote',
+  },
+  {
+    up: migration_20261107_144050_vercel_blob_media.up,
+    down: migration_20261107_144050_vercel_blob_media.down,
+    name: '20261107_144050_vercel_blob_media',
   },
 ]
