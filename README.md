@@ -843,16 +843,4 @@ Paylaşılabilir yerel çıktılar `.tools/phase8.3-qa/` altında korunmuştur: 
 - Production öncesi migration'lar çalıştırılmalıdır.
 - `/media` yerel dosya sistemi yerine kalıcı, S3 uyumlu bir obje depolamaya taşınmalıdır.
 - HTTPS kullanılmalı; veritabanı ve yönetim sırları repoya eklenmemelidir.
-
-### GitHub Pages public sürümü
-
-Kök `index.html`, GitHub Pages'in mevcut `main / root` yayın kaynağı için bağımsız bir statik
-tanıtım sürümüdür. `.nojekyll` dosyası README'nin Jekyll tarafından giriş sayfasına çevrilmesini
-önler. Bu sürüm yalnızca repoda bulunan onaylı public varlıkları kullanır ve Payload/Next.js
-uygulamasının yerini almaz: admin paneli, CMS sorguları, formlar, API route'ları ve veritabanına
-yazan özellikler GitHub Pages üzerinde çalışmaz.
-
-CMS proje/galeri görselleri `media/` altında yerel tutulduğu ve Git'e eklenmediği için Pages
-sürümüne otomatik taşınmaz. Yayınlanması onaylanan görseller önce `public/` altında kalıcı ve
-takip edilen bir konuma alınmalı; ardından statik sayfada anlamlı alt metinle kullanılmalıdır.
 # rtm-tasar-m-main
