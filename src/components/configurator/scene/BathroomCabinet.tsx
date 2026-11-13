@@ -1,7 +1,9 @@
 'use client'
 
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
-import { CanvasTexture, ExtrudeGeometry, Shape, SRGBColorSpace } from 'three'
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { CanvasTexture, ExtrudeGeometry, Shape, SRGBColorSpace, type Group } from 'three'
+import { useFrame, useThree } from '@react-three/fiber'
+import { useReducedMotion } from '../useReducedMotion'
 import { baseHeight, colorHex, palette, type Config } from '@/lib/configurator/config'
 import { bathroomGeometry, type BathroomUnit } from '@/lib/configurator/bathroom'
 import { bathroomKindNames } from '@/lib/configurator/bathroomSchema'
@@ -16,21 +18,22 @@ import type { SceneProps } from './CabinetScene'
 const RepresentativeProps = lazy(() => import('./RepresentativeProps'))
 type BathroomSceneProps = SceneProps & { lowQuality: boolean; propsReady: boolean }
 
-function BathroomBay({ unit, framed = false, standalone = false, ...props }: BathroomSceneProps & { unit: BathroomUnit; framed?: boolean; standalone?: boolean }) {
-  const c = props.config,
+function BathroomBay({ unit, framed = false, ...props }: BathroomSceneProps & { unit: BathroomUnit; framed?: boolean }) {
+  const finish = unit.row === 'side' ? props.config.bathroom?.sideCabinet?.finish : undefined
+  const c = finish ? { ...props.config, o: { ...props.config.o, ...finish, iki: false } } : props.config,
     b = c.bathroom,
     colors = useSceneColors()
   const [localOpen, setLocalOpen] = useState(false),
     [drawer, setDrawer] = useState<number | null>(null),
     [hover, setHover] = useState(false)
   if (!b) return null
-  const upper = unit.row === 'upper',
+  const upper = unit.row !== 'lower',
     width = unit.width / 100,
     height = unit.height / 100,
     bottom = unit.bottom / 100,
     depth = unit.depth / 100
-  const faceKey = upper && c.o.iki ? c.o.renk2 : c.o.renk,
-    faceColor = upper && c.o.iki ? palette[faceKey].hex : colorHex(c.o)
+  const faceKey = unit.row === 'upper' && c.o.iki ? c.o.renk2 : c.o.renk,
+    faceColor = unit.row === 'upper' && c.o.iki ? palette[faceKey].hex : colorHex(c.o)
   const body =
     c.o.govde === 'beyaz'
       ? palette.beyaz.hex
@@ -39,7 +42,7 @@ function BathroomBay({ unit, framed = false, standalone = false, ...props }: Bat
         : c.o.govde === 'antrasit'
           ? palette.antrasit.hex
           : faceColor
-  const selected = !standalone &&
+  const selected =
     (props.bathroomSelection?.row ?? 'lower') === unit.row &&
     (props.bathroomSelection?.index ?? props.selected) === unit.index
   const open = props.open || localOpen || unit.kind === 'open' || unit.kind === 'glass'
@@ -49,7 +52,7 @@ function BathroomBay({ unit, framed = false, standalone = false, ...props }: Bat
     led: Board[] = [],
     placements: PropPlacement[] = []
   function select() {
-    if (!standalone) props.onBathroomSelect?.({ row: unit.row, index: unit.index })
+    props.onBathroomSelect?.({ row: unit.row, index: unit.index })
   }
   if (unit.kind !== 'washer') {
     boards.push(
@@ -119,14 +122,14 @@ function BathroomBay({ unit, framed = false, standalone = false, ...props }: Bat
         p: [side * (width / 2 - 0.025), bottom + height / 2, depth / 2 + 0.025],
         s: [0.008, height - 0.055, 0.006],
       })
-  const options = { ...c.o, renk: faceKey, ral: upper && c.o.iki ? '' : c.o.ral, camt: unit.glass }
+  const options = { ...c.o, renk: faceKey, ral: unit.row === 'upper' && c.o.iki ? '' : c.o.ral, camt: unit.glass }
   const doorType = unit.kind === 'mirror' ? 'ayna' : unit.kind === 'glass' ? 'cam' : 'kapak'
   const leaves = Math.ceil(unit.width / 65),
     inset = framed ? 0.036 : 0
   return (
     <group
       position={[unit.x / 100, 0, unit.z / 100]}
-      name={standalone ? 'bathroom-tall-cabinet' : `bathroom-${unit.row}-${unit.index}`}
+      name={`bathroom-${unit.row}-${unit.index}`}
       onClick={(event) => {
         event.stopPropagation()
         select()
@@ -135,7 +138,7 @@ function BathroomBay({ unit, framed = false, standalone = false, ...props }: Bat
         event.stopPropagation()
         setHover(true)
         props.onHover(
-          standalone ? `Boy dolabı · ${unit.width} × ${unit.height} cm` : `${upper ? 'Üst' : 'Alt'} ${unit.index + 1} · ${bathroomKindNames[unit.kind]} · ${unit.width} cm`,
+          unit.row === 'side' ? `Boy dolabı · ${unit.index + 1}. göz · ${unit.width} × ${unit.height} cm` : `${upper ? 'Üst' : 'Alt'} ${unit.index + 1} · ${bathroomKindNames[unit.kind]} · ${unit.width} cm`,
         )
       }}
       onPointerOut={() => {
@@ -235,6 +238,7 @@ function BathroomBay({ unit, framed = false, standalone = false, ...props }: Bat
       </Suspense>
       {selected || hover ? (
         <SelectionOutline
+          ignorePointer
           width={width - 0.01}
           height={height - 0.01}
           position={[0, bottom + height / 2, depth / 2 + 0.04]}
@@ -261,6 +265,36 @@ function BathroomBay({ unit, framed = false, standalone = false, ...props }: Bat
       ) : null}
     </group>
   )
+}
+function AnimatedSideBay({ unit, ...props }: BathroomSceneProps & { unit: BathroomUnit }) {
+  const ref = useRef<Group>(null)
+  const previous = useRef({ width: unit.width, height: unit.height, depth: unit.depth })
+  const [initial] = useState<[number, number, number]>(() => [unit.x / 100, unit.bottom / 100, unit.z / 100])
+  const reduced = useReducedMotion()
+  const invalidate = useThree((state) => state.invalidate)
+  useLayoutEffect(() => {
+    const group = ref.current
+    if (!group) return
+    group.scale.set(reduced ? 1 : group.scale.x * previous.current.width / unit.width, reduced ? 1 : group.scale.y * previous.current.height / unit.height, reduced ? 1 : group.scale.z * previous.current.depth / unit.depth)
+    previous.current = { width: unit.width, height: unit.height, depth: unit.depth }
+    invalidate()
+  }, [unit.width, unit.height, unit.depth, unit.x, unit.bottom, unit.z, reduced, invalidate])
+  useFrame((_, delta) => {
+    const group = ref.current
+    if (!group) return
+    const factor = reduced ? 1 : 1 - Math.exp(-Math.min(delta, 0.05) * 22)
+    const target = [unit.x / 100, unit.bottom / 100, unit.z / 100]
+    let moving = false
+    for (const [i, axis] of (['x', 'y', 'z'] as const).entries()) {
+      const difference = target[i] - group.position[axis]
+      const scale = 1 - group.scale[axis]
+      group.position[axis] += Math.abs(difference) < 0.0001 ? difference : difference * factor
+      group.scale[axis] += Math.abs(scale) < 0.0001 ? scale : scale * factor
+      moving ||= Math.abs(difference) > 0.0001 || Math.abs(scale) > 0.0001
+    }
+    if (moving) invalidate()
+  })
+  return <group ref={ref} position={initial}><BathroomBay {...props} unit={{ ...unit, x: 0, bottom: 0, z: 0 }} framed /></group>
 }
 function bathroomReflection() {
   // A local, illustrative room reflection; no extra render pass or remote image.
@@ -432,7 +466,7 @@ export function BathroomCabinet(props: BathroomSceneProps) {
               unit={{ ...unit, ...(b.sideCabinet && g.sinks.length === 1 ? { x: 0, width: c.d.w } : {}), bottom: g.counter + b.gap, height: b.upperHeight }}
             />
           ))}
-      {g.sideCabinet ? <BathroomBay {...props} unit={g.sideCabinet} framed standalone /> : null}
+      <group name="bathroom-tall-cabinet">{g.side.map((unit) => <AnimatedSideBay key={unit.index} {...props} unit={unit} />)}</group>
       <BathroomFixtures config={c} />
       <Suspense fallback={null}>
         {countertopProps.length ? <RepresentativeProps placements={countertopProps} /> : null}

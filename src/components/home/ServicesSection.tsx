@@ -1,9 +1,11 @@
+import { EditableRegion } from '@/components/site/EditableRegion'
 import Link from 'next/link'
 import { getHomepageServices } from '@/lib/catalogData'
 import { TextAnimate } from '@/components/site/TextAnimate'
 import { ServiceShowcase } from './ServiceShowcase'
+import type { HomepageCopy } from '@/lib/homepageContent'
 
-export async function ServicesSection() {
+export async function ServicesSection({ copy }: { copy: HomepageCopy }) {
   const services = await getHomepageServices()
   return (
     <section
@@ -12,12 +14,18 @@ export async function ServicesSection() {
       aria-labelledby="services-heading"
     >
       <div className="site-shell">
-        <div className="workshop-section-heading services-heading">
+        <EditableRegion as="div" className="workshop-section-heading services-heading" data-rtm-edit="site-settings" data-rtm-field="homepage__servicesHeading" data-rtm-label="Çalışma alanları başlığı">
           <div>
             <p className="eyebrow">03 / ÇALIŞMA ALANLARI</p>
             <h2 id="services-heading">
-              <TextAnimate animation="slideUp" as="span" by="word" duration={0.52}>
-                Fikirden
+              <TextAnimate
+                animation="slideUp"
+                as="span"
+                by="word"
+                className="services-heading-lead"
+                duration={0.52}
+              >
+                {copy.servicesHeading}
               </TextAnimate>{' '}
               <span>
                 <TextAnimate
@@ -28,15 +36,15 @@ export async function ServicesSection() {
                   duration={0.46}
                   stagger={0.026}
                 >
-                  mekâna.
+                  {copy.servicesEmphasis}
                 </TextAnimate>
               </span>
             </h2>
           </div>
-          <Link className="workshop-link" href="/hizmetler">
+          <Link className="workshop-link section-archive-link" href="/hizmetler">
             Tüm hizmetler ↗
           </Link>
-        </div>
+        </EditableRegion>
         {services.length ? (
           <ServiceShowcase services={services} />
         ) : (

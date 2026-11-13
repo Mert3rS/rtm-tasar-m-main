@@ -1,9 +1,10 @@
+import { EditableRegion } from '@/components/site/EditableRegion'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 import { ArrowIcon } from './ArrowIcon'
 import { DesignCTAParticles } from './DesignCTAParticles'
 import { TextAnimate } from './TextAnimate'
-import { TypingAnimation } from './TypingAnimation'
 
 type DesignCTAProps = {
   className?: string
@@ -25,7 +26,7 @@ export function DesignCTA({
   eyebrow = 'FİKİRDEN MEKÂNA / RTM TASARIM',
   heading,
   headingId = 'design-cta-heading',
-  primaryHref = '/teklif-al',
+  primaryHref = '/iletisim',
   primaryLabel = 'İletişime geçin',
   secondaryHref = '/projeler',
   secondaryLabel = 'Projeleri keşfet',
@@ -47,6 +48,12 @@ export function DesignCTA({
         <div className="design-cta">
           <DesignCTAParticles />
           <div className="design-cta-glow" aria-hidden="true" />
+          <Link
+            aria-hidden="true"
+            className="design-cta-card-link"
+            href={primaryHref}
+            tabIndex={-1}
+          />
           <div className="design-cta-content">
             <header className="design-cta-meta">
               <TextAnimate
@@ -59,30 +66,34 @@ export function DesignCTA({
               >
                 {eyebrow}
               </TextAnimate>
-              <span aria-hidden="true">RTM / 01</span>
+              <BrandLogo className="design-cta-logo" decorative />
             </header>
-            <div className="design-cta-main">
+            <EditableRegion as="div" className="design-cta-main" data-rtm-edit={headingId === 'closing-heading' ? 'site-settings' : undefined} data-rtm-field={headingId === 'closing-heading' ? 'homepage__ctaHeading' : undefined} data-rtm-label="İletişim çağrısı başlık ve açıklaması">
               {typedLine ? (
                 <h2 id={headingId}>
-                  <TextAnimate animation="blurInUp" as="span" by="text" duration={0.85}>
+                  <TextAnimate animation="slideUp" as="span" by="word" duration={0.56}>
                     {heading}
                   </TextAnimate>
                   <br />
                   <em>
-                    <TypingAnimation
+                    <TextAnimate
+                      animation="blurInUp"
+                      as="span"
+                      by="character"
                       className="design-cta-typing"
-                      delay={240}
-                      typeSpeed={62}
+                      delay={0.12}
+                      duration={0.48}
+                      stagger={0.025}
                     >
                       {typedLine}
-                    </TypingAnimation>
+                    </TextAnimate>
                   </em>
                 </h2>
               ) : (
                 <TextAnimate
                   animation="blurInUp"
                   as="h2"
-                  by="text"
+                  by="word"
                   duration={0.85}
                   id={headingId}
                 >
@@ -93,7 +104,7 @@ export function DesignCTA({
                 <TextAnimate
                   animation="fadeIn"
                   as="p"
-                  by="text"
+                  by="word"
                   delay={0.18}
                   duration={0.72}
                 >
@@ -112,7 +123,7 @@ export function DesignCTA({
                   </Link>
                 </div>
               </div>
-            </div>
+            </EditableRegion>
             <footer className="design-cta-footer" aria-hidden="true">
               <span>INTERIOR</span>
               <i />

@@ -188,6 +188,8 @@ export interface User {
   collection: 'users';
 }
 /**
+ * Burası ortak fotoğraf kütüphanesidir. Yüklenen fotoğrafın sitede görünmesi için ilgili proje, hizmet, model veya sayfanın görsel alanında seçilmesi gerekir. Konum rehberi için Site içeriği ekranını açın.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "media".
  */
@@ -197,9 +199,10 @@ export interface Media {
    * Panorama yalnızca tam 360° equirectangular JPEG/WebP olmalıdır. Tam 2:1 oran, önerilen 4096×2048; normal fotoğraf seçmeyin. Orijinal dosya korunur.
    */
   usage: 'image' | 'panorama';
+  /**
+   * Fotoğrafta ne göründüğünü kısa ve anlaşılır biçimde yazın; örneğin mekânı ve belirgin malzemeyi belirtin. Dosya adı veya “görsel” yazmak yerine fotoğrafın içeriğini anlatın. Bu metin erişilebilirlikte ve medya seçiminde kullanılır.
+   */
   alt: string;
-  prefix?: string | null;
-  _objectKey?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -269,6 +272,8 @@ export interface ProjectCategory {
   createdAt: string;
 }
 /**
+ * Proje kapağı, detay albümü ve paylaşım görseli ayrı alanlardır. Yerleşim rehberinden her fotoğrafın kullanıldığı alanları inceleyin. Taslak değişiklikler Yayınla ile siteye yansır.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "projects".
  */
@@ -279,8 +284,14 @@ export interface Project {
    * URL adı: küçük Latin harfleri, rakamlar ve aralarda tire (ör. ornek-mutfak).
    */
   slug: string;
+  /**
+   * Proje arşivi ve ana sayfanın seçili proje kartlarındaki kısa metin. Detay sayfasının uzun anlatımı için Proje anlatımı alanını kullanın.
+   */
   shortDescription: string;
   city: number | City;
+  /**
+   * Yalnızca proje detayındaki uzun açıklama. Kartların kısa metnini değiştirmez.
+   */
   description?: {
     root: {
       type: string;
@@ -300,13 +311,22 @@ export interface Project {
    * Aktif olmayan kategoriler public sayfalarda gösterilmez; mevcut proje ilişkileri korunur.
    */
   categories?: (number | ProjectCategory)[] | null;
+  /**
+   * Proje arşivi ve detay kapağı; seçili projelerde ana sayfanın küre kartı ve kaydırmalı seçili işler fotoğrafı. Ana sayfa açılışında yalnızca bağımsız seçim yapılmamış konumlarda otomatik kaynak olabilir. Yatay, net bir fotoğraf seçin; kenarlar ekrana göre kırpılır.
+   */
   coverImage: number | Media;
+  /**
+   * Proje detayındaki fotoğraf albümü. Kapak ayrıca gösterilir; fotoğrafa tıklanınca büyük görüntü açılır. Satırları sürükleyerek sıralayın.
+   */
   gallery?:
     | {
         image: number | Media;
         id?: string | null;
       }[]
     | null;
+  /**
+   * Yayınlanmış ilk dört seçili proje ana sayfada küre / seçili işler bölümlerine girer. Üst açılış fotoğrafları Site ayarlarından bağımsız seçilir; boş konumlarda yayınlanmış ilk dokuz geçerli kapak otomatik kaynak olabilir.
+   */
   featured?: boolean | null;
   /**
    * Küçük değerler önce gösterilir. Eşitlikte yeni projeler önce gelir.
@@ -354,9 +374,12 @@ export interface Showroom {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Showroom arşivindeki normal kapak fotoğrafı. 360° turun içindeki görüntüyü değiştirmek için Showroom sahneleri → 360° panorama alanını kullanın.
+   */
   coverImage?: (number | null) | Media;
   /**
-   * Ziyaretçiye yalnızca yayınlanmış proje bağlantısı gösterilir.
+   * Bu proje seçilip showroom yayınlandığında proje detayında 360° keşif alanı görünür. İlişki kurulmazsa alan gösterilmez.
    */
   relatedProject?: (number | null) | Project;
   featured?: boolean | null;
@@ -386,6 +409,9 @@ export interface ShowroomScene {
    * Media’da “360° panorama” seçin. Tam 2:1 JPEG/WebP, önerilen 4096×2048; en fazla 8192×4096. Sıradan fotoğraf yüklemeyin.
    */
   panoramaImage: number | Media;
+  /**
+   * Turun altındaki sahne seçim düğmesinin normal fotoğrafı. Tercihen 640×360 px veya daha büyük yatay kare; boşsa 360° yazısı gösterilir. Turun asıl panoramasını değiştirmez.
+   */
   thumbnailImage?: (number | null) | Media;
   description?: string | null;
   /**
@@ -511,7 +537,13 @@ export interface Service {
    * URL adı: küçük Latin harfleri, rakamlar ve aralarda tire (ör. ornek-mutfak).
    */
   slug: string;
+  /**
+   * Hizmet arşivi ve ana sayfadaki hizmet kartının kısa metni.
+   */
   shortDescription?: string | null;
+  /**
+   * Hizmet detayında gösterilen uzun anlatım; kartların kısa metni ayrıdır.
+   */
   description?: {
     root: {
       type: string;
@@ -527,7 +559,13 @@ export interface Service {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Ana sayfanın çalışma alanları bölümü, hizmet listesi ve hizmet detayının kapağı. Yatay fotoğraf kullanın.
+   */
   coverImage?: (number | null) | Media;
+  /**
+   * Hizmet detayındaki açılır fotoğraf albümü. Ana sayfa kartının görselini değiştirmek için Kapak görseli alanını kullanın.
+   */
   galleryImages?:
     | {
         image: number | Media;
@@ -584,7 +622,13 @@ export interface DesignModel {
    * URL adı: küçük Latin harfleri, rakamlar ve aralarda tire (ör. ornek-mutfak).
    */
   slug: string;
+  /**
+   * Model katalog kartında ve ana sayfadaki seçili modelde görünen özet.
+   */
   shortDescription?: string | null;
+  /**
+   * Model detay sayfasındaki uzun metin.
+   */
   description?: {
     root: {
       type: string;
@@ -600,7 +644,13 @@ export interface DesignModel {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Model arşivi, model detayı ve seçiliyse ana sayfa koleksiyonundaki fotoğraf.
+   */
   coverImage?: (number | null) | Media;
+  /**
+   * Model detayında açılan fotoğraf albümü. Aynı fotoğrafı birden fazla kayıtta seçmek ortak medya kullanır.
+   */
   galleryImages?:
     | {
         image: number | Media;
@@ -689,7 +739,7 @@ export interface AssistantAnswer {
         label: string;
         kind: 'route' | 'settings' | 'consent';
         /**
-         * Örn. /teklif-al, /modeller?kategori=mutfak. Haricî adres kabul edilmez.
+         * Örn. /iletisim, /modeller?kategori=mutfak. Haricî adres kabul edilmez.
          */
         route?: string | null;
         /**
@@ -722,7 +772,7 @@ export interface AssistantAnswer {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Onaylı soru/cevaplar. Asistan bunları arar; /sss sayfasında yayınlanır. Otomatik içerik eklenmez.
+ * Onaylı soru/cevaplar. Yalnızca asistan yanıtlarında kullanılır; ayrı bir public sayfada yayınlanmaz. Otomatik içerik eklenmez.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "faqs".
@@ -998,8 +1048,6 @@ export interface UsersSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   usage?: T;
   alt?: T;
-  prefix?: T;
-  _objectKey?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -1419,14 +1467,336 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
+ * Ana sayfa açılışı, menü ve sayfa metinleri, kurumsal logo, iletişim, formlar, SEO ve hukuki ayarlar. Bu globalde Kaydet dediğiniz değişiklikler doğrudan siteye yansır.
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-settings".
  */
 export interface SiteSetting {
   id: number;
   designShareRetentionDays?: number | null;
+  heroImages?: {
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    center?: (number | null) | Media;
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    topLeft?: (number | null) | Media;
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    topCenter?: (number | null) | Media;
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    topRight?: (number | null) | Media;
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    middleLeft?: (number | null) | Media;
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    middleRight?: (number | null) | Media;
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    bottomLeft?: (number | null) | Media;
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    bottomCenter?: (number | null) | Media;
+    /**
+     * Animasyonun poster görseli de yüklenemezse kullanılacak yedek fotoğraf. Animasyon karelerini değiştirmez. Yatay, net ve anlamlı alternatif metinli bir görsel seçin. Boşsa yayınlanmış proje kapağı yedek olabilir.
+     */
+    bottomRight?: (number | null) | Media;
+  };
+  homepage?: {
+    /**
+     * Mutfak animasyonunun ilk ekranındaki metinler. Ana başlığın ilk cümlesi büyük başlık, devamı açıklama olarak görünür. Animasyon kareleri ve Mekân / Malzeme / Detay bölüm yazıları uygulama dosyalarından gelir.
+     */
+    heroEyebrow?: string | null;
+    /**
+     * Mutfak animasyonunun ilk ekranındaki metinler. Ana başlığın ilk cümlesi büyük başlık, devamı açıklama olarak görünür. Animasyon kareleri ve Mekân / Malzeme / Detay bölüm yazıları uygulama dosyalarından gelir.
+     */
+    heroHeading?: string | null;
+    /**
+     * Mutfak animasyonunun ilk ekranındaki metinler. Ana başlığın ilk cümlesi büyük başlık, devamı açıklama olarak görünür. Animasyon kareleri ve Mekân / Malzeme / Detay bölüm yazıları uygulama dosyalarından gelir.
+     */
+    heroButton?: string | null;
+    /**
+     * Başlığın iki satırı hem animasyonun kapanışında hem hemen altındaki iletişim kartında kullanılır. Açıklama yalnızca iletişim kartında görünür.
+     */
+    ctaHeading?: string | null;
+    /**
+     * Başlığın iki satırı hem animasyonun kapanışında hem hemen altındaki iletişim kartında kullanılır. Açıklama yalnızca iletişim kartında görünür.
+     */
+    ctaEmphasis?: string | null;
+    /**
+     * Başlığın iki satırı hem animasyonun kapanışında hem hemen altındaki iletişim kartında kullanılır. Açıklama yalnızca iletişim kartında görünür.
+     */
+    ctaDescription?: string | null;
+    /**
+     * Kürenin ve seçili proje kartının üstündeki bölüm başlığı. Kartın fotoğrafı ve açıklaması ilgili projede düzenlenir.
+     */
+    atlasHeading?: string | null;
+    /**
+     * Kürenin ve seçili proje kartının üstündeki bölüm başlığı. Kartın fotoğrafı ve açıklaması ilgili projede düzenlenir.
+     */
+    atlasEmphasis?: string | null;
+    /**
+     * Kürenin ve seçili proje kartının üstündeki bölüm başlığı. Kartın fotoğrafı ve açıklaması ilgili projede düzenlenir.
+     */
+    atlasDescription?: string | null;
+    /**
+     * “Öne çıkar” seçeneği açık yayınlanmış ilk dört projenin gösterildiği bölüm.
+     */
+    projectsHeading?: string | null;
+    /**
+     * “Öne çıkar” seçeneği açık yayınlanmış ilk dört projenin gösterildiği bölüm.
+     */
+    projectsEmphasis?: string | null;
+    /**
+     * “Öne çıkar” seçeneği açık yayınlanmış ilk dört projenin gösterildiği bölüm.
+     */
+    projectsDescription?: string | null;
+    /**
+     * Burada yalnızca bölüm başlıkları değişir. Fotoğrafları ve kart açıklamalarını Hizmetler / Tasarım modelleri kayıtlarında düzenleyin.
+     */
+    servicesHeading?: string | null;
+    /**
+     * Burada yalnızca bölüm başlıkları değişir. Fotoğrafları ve kart açıklamalarını Hizmetler / Tasarım modelleri kayıtlarında düzenleyin.
+     */
+    servicesEmphasis?: string | null;
+    /**
+     * Burada yalnızca bölüm başlıkları değişir. Fotoğrafları ve kart açıklamalarını Hizmetler / Tasarım modelleri kayıtlarında düzenleyin.
+     */
+    modelsHeading?: string | null;
+    /**
+     * Burada yalnızca bölüm başlıkları değişir. Fotoğrafları ve kart açıklamalarını Hizmetler / Tasarım modelleri kayıtlarında düzenleyin.
+     */
+    modelsEmphasis?: string | null;
+    /**
+     * Ana sayfanın alt kısmındaki atölye tanıtımı. Yanındaki hareketli çizim, uygulamanın sabit tanıtım animasyonudur; müşteri proje fotoğrafı değildir.
+     */
+    studioHeading?: string | null;
+    /**
+     * Ana sayfanın alt kısmındaki atölye tanıtımı. Yanındaki hareketli çizim, uygulamanın sabit tanıtım animasyonudur; müşteri proje fotoğrafı değildir.
+     */
+    studioEmphasis?: string | null;
+    /**
+     * Ana sayfanın alt kısmındaki atölye tanıtımı. Yanındaki hareketli çizim, uygulamanın sabit tanıtım animasyonudur; müşteri proje fotoğrafı değildir.
+     */
+    studioDescription?: string | null;
+    /**
+     * Ana sayfanın alt kısmındaki atölye tanıtımı. Yanındaki hareketli çizim, uygulamanın sabit tanıtım animasyonudur; müşteri proje fotoğrafı değildir.
+     */
+    studioButton?: string | null;
+  };
+  siteCopy?: {
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    navHome?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    navProjects?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    navModels?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    navStudio?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    navServices?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    navShowroom?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    navContact?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    navQuote?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    footerExploreLabel?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    footerContactLabel?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    footerContactHeading?: string | null;
+    /**
+     * Üst menü, mobil menü ve footer bağlantılarında görünen ortak metinler.
+     */
+    footerSignature?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    projectsEyebrow?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    projectsTitle?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    projectsDescription?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    modelsEyebrow?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    modelsTitle?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    modelsDescription?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    servicesEyebrow?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    servicesTitle?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    servicesTitleSecond?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    servicesDescription?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    showroomEyebrow?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    showroomTitle?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    showroomTitleSecond?: string | null;
+    /**
+     * Projeler, modeller, hizmetler ve showroom sayfalarının büyük giriş başlıkları.
+     */
+    showroomDescription?: string | null;
+    /**
+     * İletişim ve teklif formu sayfalarının ziyaretçiye görünen giriş metinleri.
+     */
+    contactEyebrow?: string | null;
+    /**
+     * İletişim ve teklif formu sayfalarının ziyaretçiye görünen giriş metinleri.
+     */
+    contactTitle?: string | null;
+    /**
+     * İletişim ve teklif formu sayfalarının ziyaretçiye görünen giriş metinleri.
+     */
+    contactTitleSecond?: string | null;
+    /**
+     * İletişim ve teklif formu sayfalarının ziyaretçiye görünen giriş metinleri.
+     */
+    contactDescription?: string | null;
+    /**
+     * İletişim ve teklif formu sayfalarının ziyaretçiye görünen giriş metinleri.
+     */
+    quoteEyebrow?: string | null;
+    /**
+     * İletişim ve teklif formu sayfalarının ziyaretçiye görünen giriş metinleri.
+     */
+    quoteTitle?: string | null;
+    /**
+     * İletişim ve teklif formu sayfalarının ziyaretçiye görünen giriş metinleri.
+     */
+    quoteTitleSecond?: string | null;
+    /**
+     * İletişim ve teklif formu sayfalarının ziyaretçiye görünen giriş metinleri.
+     */
+    quoteDescription?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    corporateCtaEyebrow?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    corporateCtaHeading?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    corporateCtaDescription?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    corporateCtaPrimary?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    corporateCtaSecondary?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    projectTourEyebrow?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    projectTourHeading?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    projectTourDescription?: string | null;
+    /**
+     * Kurumsal sayfalardaki teklif çağrısı ve proje detayındaki 360° tur kartı.
+     */
+    projectTourButton?: string | null;
+    /**
+     * Bulunamayan adreslerde gösterilen hata sayfasının metinleri.
+     */
+    notFoundEyebrow?: string | null;
+    /**
+     * Bulunamayan adreslerde gösterilen hata sayfasının metinleri.
+     */
+    notFoundHeading?: string | null;
+    /**
+     * Bulunamayan adreslerde gösterilen hata sayfasının metinleri.
+     */
+    notFoundEmphasis?: string | null;
+    /**
+     * Bulunamayan adreslerde gösterilen hata sayfasının metinleri.
+     */
+    notFoundDescription?: string | null;
+    /**
+     * Bulunamayan adreslerde gösterilen hata sayfasının metinleri.
+     */
+    notFoundButton?: string | null;
+  };
   companyName?: string | null;
+  /**
+   * Sitenin en altındaki footer’da logonun altında görünür. Hakkımızda sayfasının uzun anlatımı ayrı yönetilir.
+   */
   companyDescription?: string | null;
+  /**
+   * Yüklendiğinde üst menü ve footer bu logoyu kullanır. Boş bırakırsanız uygulamanın yerleşik RTM logosu gösterilir. Şeffaf arka planlı yatay PNG, WebP veya SVG tercih edin.
+   */
   logo?: (number | null) | Media;
   contactEmail?: string | null;
   phone?: string | null;
@@ -1486,7 +1856,7 @@ export interface SiteSetting {
   createdAt?: string | null;
 }
 /**
- * Şirket/ekip bilgilerini onaylı kaynaklardan girin. Önerilen giriş metnini inceleyip yayınlayın. Yalnızca yayınlanmış içerik siteye ve ana sayfa tanıtımına aktarılır.
+ * Şirket/ekip bilgilerini onaylı kaynaklardan girin. Önerilen giriş metnini inceleyip yayınlayın. Yalnızca yayınlanmış içerik Hakkımızda sayfasına aktarılır. Ana sayfanın açılış metni Site ayarları → Ana sayfa metinleri sekmesindedir.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "about-page".
@@ -1514,6 +1884,9 @@ export interface AboutPage {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Hakkımızda sayfasının en üstündeki geniş tanıtım fotoğrafı. Yatay ve net bir fotoğraf önerilir. Ana sayfanın dokuz açılış fotoğrafını değiştirmez; onlar Site ayarları → Ana sayfa fotoğraflarından seçilir.
+   */
   heroImage?: (number | null) | Media;
   storyHeading?: string | null;
   storyContent?: {
@@ -1531,6 +1904,9 @@ export interface AboutPage {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Hakkımızda sayfasında şirket hikâyesi anlatımının yanındaki fotoğraf.
+   */
   storyImage?: (number | null) | Media;
   expertiseHeading?: string | null;
   expertiseDescription?: string | null;
@@ -1543,11 +1919,17 @@ export interface AboutPage {
     | null;
   teamHeading?: string | null;
   teamDescription?: string | null;
+  /**
+   * Hakkımızda sayfasındaki ekip bölümünün genel fotoğrafı. Kişi portreleri aşağıdaki Ekip üyeleri alanında seçilir.
+   */
   teamImage?: (number | null) | Media;
   teamMembers?:
     | {
         name: string;
         role?: string | null;
+        /**
+         * Bu satırdaki kişinin adının üzerinde görünür. Kare veya dikey, yüzü ortada net bir portre seçin. Toplu ekip görselinden bağımsızdır.
+         */
         image?: (number | null) | Media;
         id?: string | null;
       }[]
@@ -1561,6 +1943,9 @@ export interface AboutPage {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Hakkımızda sayfasının şirket fotoğraf albümü. Proje ve model galerilerinden bağımsızdır.
+   */
   galleryImages?:
     | {
         image: number | Media;
@@ -1627,6 +2012,95 @@ export interface AssistantSetting {
  */
 export interface SiteSettingsSelect<T extends boolean = true> {
   designShareRetentionDays?: T;
+  heroImages?:
+    | T
+    | {
+        center?: T;
+        topLeft?: T;
+        topCenter?: T;
+        topRight?: T;
+        middleLeft?: T;
+        middleRight?: T;
+        bottomLeft?: T;
+        bottomCenter?: T;
+        bottomRight?: T;
+      };
+  homepage?:
+    | T
+    | {
+        heroEyebrow?: T;
+        heroHeading?: T;
+        heroButton?: T;
+        ctaHeading?: T;
+        ctaEmphasis?: T;
+        ctaDescription?: T;
+        atlasHeading?: T;
+        atlasEmphasis?: T;
+        atlasDescription?: T;
+        projectsHeading?: T;
+        projectsEmphasis?: T;
+        projectsDescription?: T;
+        servicesHeading?: T;
+        servicesEmphasis?: T;
+        modelsHeading?: T;
+        modelsEmphasis?: T;
+        studioHeading?: T;
+        studioEmphasis?: T;
+        studioDescription?: T;
+        studioButton?: T;
+      };
+  siteCopy?:
+    | T
+    | {
+        navHome?: T;
+        navProjects?: T;
+        navModels?: T;
+        navStudio?: T;
+        navServices?: T;
+        navShowroom?: T;
+        navContact?: T;
+        navQuote?: T;
+        footerExploreLabel?: T;
+        footerContactLabel?: T;
+        footerContactHeading?: T;
+        footerSignature?: T;
+        projectsEyebrow?: T;
+        projectsTitle?: T;
+        projectsDescription?: T;
+        modelsEyebrow?: T;
+        modelsTitle?: T;
+        modelsDescription?: T;
+        servicesEyebrow?: T;
+        servicesTitle?: T;
+        servicesTitleSecond?: T;
+        servicesDescription?: T;
+        showroomEyebrow?: T;
+        showroomTitle?: T;
+        showroomTitleSecond?: T;
+        showroomDescription?: T;
+        contactEyebrow?: T;
+        contactTitle?: T;
+        contactTitleSecond?: T;
+        contactDescription?: T;
+        quoteEyebrow?: T;
+        quoteTitle?: T;
+        quoteTitleSecond?: T;
+        quoteDescription?: T;
+        corporateCtaEyebrow?: T;
+        corporateCtaHeading?: T;
+        corporateCtaDescription?: T;
+        corporateCtaPrimary?: T;
+        corporateCtaSecondary?: T;
+        projectTourEyebrow?: T;
+        projectTourHeading?: T;
+        projectTourDescription?: T;
+        projectTourButton?: T;
+        notFoundEyebrow?: T;
+        notFoundHeading?: T;
+        notFoundEmphasis?: T;
+        notFoundDescription?: T;
+        notFoundButton?: T;
+      };
   companyName?: T;
   companyDescription?: T;
   logo?: T;

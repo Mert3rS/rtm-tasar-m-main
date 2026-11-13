@@ -1,4 +1,4 @@
-/** Line shield with a lime accent dot (consent card and re-open button). Static markup. */
+/** Line shield with a brand accent dot (consent card and re-open button). Static markup. */
 export function ConsentIcon({ className }: { className?: string }) {
   return (
     <svg

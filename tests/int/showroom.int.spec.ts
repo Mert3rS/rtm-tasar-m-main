@@ -33,21 +33,8 @@ describe('Panorama boundaries', () => {
   ])('does not allow arbitrary panorama asset URLs: %s', (value) => {
     expect(managedMediaUrl(value)).toBeUndefined()
   })
-  it('allows the native media route and the owned Vercel Blob origin', () => {
+  it('allows only the native media file route', () =>
     expect(managedMediaUrl('/api/media/file/approved-pano.jpg')).toBe(
       '/api/media/file/approved-pano.jpg',
-    )
-    expect(
-      managedMediaUrl(
-        'https://1qldjncltmptxwup.public.blob.vercel-storage.com/folder/approved-pano.jpg',
-      ),
-    ).toBe(
-      'https://1qldjncltmptxwup.public.blob.vercel-storage.com/folder/approved-pano.jpg',
-    )
-    expect(
-      managedMediaUrl(
-        'https://another-store.public.blob.vercel-storage.com/approved-pano.jpg',
-      ),
-    ).toBeUndefined()
-  })
+    ))
 })

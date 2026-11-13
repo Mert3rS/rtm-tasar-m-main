@@ -8,6 +8,7 @@ import {
   basinNames,
   bathroomGeometry,
   bathroomStyles,
+  bathroomSideOptions,
   normalizeBathroomSelection,
   setBathroomCount,
   setBathroomKind,
@@ -24,14 +25,16 @@ import {
 import { DetailIcon } from '../StudioIcon'
 import { FieldGroup, NumberField, SelectField, Toggle } from './Fields'
 import type { PanelProps } from './DesignPanels'
+import { BathroomSidePanel } from './BathroomSidePanel'
 
 function selectionFor(props: PanelProps) {
+  if (props.bathroomSelection?.row === 'side') return { row: 'side', index: Math.min(props.bathroomSelection.index, bathroomSideOptions(props.config).interior.h.length - 1) } satisfies BathroomSelection
   return normalizeBathroomSelection(
     props.config,
     props.bathroomSelection ?? { row: 'lower', index: props.selected },
   )
 }
-const rowNames = { lower: 'Alt dolaplar', upper: 'Üst dolaplar' }
+const rowNames = { lower: 'Alt dolaplar', upper: 'Üst dolaplar', side: 'Boy dolabı' }
 export function BathroomRowPicker(props: PanelProps) {
   const selection = selectionFor(props)
   return (
@@ -40,6 +43,7 @@ export function BathroomRowPicker(props: PanelProps) {
         [
           'lower',
           ...(props.config.bathroom?.upperEnabled ? ['upper' as const] : []),
+          'side',
         ] satisfies BathroomSelection['row'][]
       ).map((row) => (
         <button
@@ -54,7 +58,8 @@ export function BathroomRowPicker(props: PanelProps) {
     </div>
   )
 }
-export function BathroomStartPanel({ config: c, edit, onBathroomSelect }: PanelProps) {
+export function BathroomStartPanel(props: PanelProps) {
+  const { config: c, edit, onBathroomSelect } = props
   const b = c.bathroom,
     g = bathroomGeometry(c)
   return (
@@ -182,21 +187,8 @@ export function BathroomStartPanel({ config: c, edit, onBathroomSelect }: PanelP
               Üst bölüm alt dolaptan bağımsızdır; toplam üst kot {g.top} cm.
             </p>
           </FieldGroup>
-          <FieldGroup title="Sağ boy dolabı">
-            <Toggle label="Boy dolabını göster" checked={Boolean(b.sideCabinet)}
-              onChange={() => edit((draft) => setBathroomOption(draft, 'sideCabinet', b.sideCabinet ? undefined : { width: 42, height: 140, depth: 30, gap: 20 }))} />
-            {b.sideCabinet ? (['width', 'height', 'depth', 'gap'] as const).map((key) => (
-              <NumberField key={key}
-                label={{ width: 'Boy dolabı genişliği', height: 'Boy dolabı yüksekliği', depth: 'Boy dolabı derinliği', gap: 'Lavabo ünitesi ile arası' }[key]}
-                value={b.sideCabinet?.[key] ?? 0}
-                min={{ width: 30, height: 100, depth: 20, gap: 10 }[key]}
-                max={{ width: 60, height: 180, depth: 40, gap: 40 }[key]}
-                onChange={(value) => edit((draft) => {
-                  if (draft.bathroom?.sideCabinet) draft.bathroom.sideCabinet[key] = value
-                })} />
-            )) : null}
-            {b.sideCabinet ? <p className="dc-hint">Lavabo ünitesi {c.d.w} cm · boy dolabı ve ara ile toplam {g.totalWidth} cm.</p> : null}
-          </FieldGroup>
+          <BathroomRowPicker {...props} />
+          <BathroomSidePanel {...props} />
         </>
       ) : (
         <p className="dc-hint">
@@ -212,6 +204,7 @@ export function BathroomSectionsPanel(props: PanelProps) {
     b = c.bathroom,
     selection = selectionFor(props)
   if (!b) return null
+  if (selection.row === 'side') return <><BathroomRowPicker {...props} /><BathroomSidePanel {...props} /></>
   const row = selection.row === 'lower' ? c.r.main : b.upper,
     units = bathroomGeometry(c)[selection.row],
     index = selection.index
@@ -335,6 +328,7 @@ export function BathroomInteriorPanel(props: PanelProps) {
     b = c.bathroom,
     selection = selectionFor(props)
   if (!b) return null
+  if (selection.row === 'side') return <><BathroomRowPicker {...props} /><BathroomSidePanel {...props} /></>
   const units = bathroomGeometry(c)[selection.row],
     unit = units[selection.index],
     upper = selection.row === 'upper'

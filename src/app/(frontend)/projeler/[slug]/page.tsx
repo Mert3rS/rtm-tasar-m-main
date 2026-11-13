@@ -13,6 +13,7 @@ import { TrackInterest } from '@/components/personalization/TrackInterest'
 import { InterestCards } from '@/components/personalization/InterestCards'
 import { projectInterestSignals } from '@/lib/personalization/signals'
 import { TextAnimate } from '@/components/site/TextAnimate'
+import { getPublicSiteSettings } from '@/lib/siteSettings'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -31,16 +32,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProjectPage({ params }: Props) {
   const project = await getProjectBySlug((await params).slug)
   if (!project) notFound()
-  const [related, showroom] = await Promise.all([
+  const [related, showroom, settings] = await Promise.all([
     getRelatedProjects(project),
     getShowroomForProject(project.numericId),
+    getPublicSiteSettings(),
   ])
   // Repeating a cover in the CMS gallery does not create duplicate slides.
   const photos = [...(project.cover ? [project.cover] : []), ...project.gallery].filter(
     (image, index, all) => all.findIndex((item) => item.url === image.url) === index,
   )
   return (
-    <main id="main-content" className="project-detail-page">
+    <main id="main-content" className="project-detail-page" data-rtm-edit={`projects:${project.numericId}`} data-rtm-label={`${project.title} · Proje detayı`}>
       <TrackInterest k="project" s={project.slug} l={project.title.slice(0, 80)} sig={projectInterestSignals(project)} />
       <header className="site-shell project-detail-heading">
         <Link className="text-link back-to-portfolio" href="/projeler">
@@ -70,6 +72,9 @@ export default async function ProjectPage({ params }: Props) {
             sizes="(min-width: 1440px) 1328px, 94vw"
             loading="eager"
             src={project.cover.url}
+            data-rtm-edit={`projects:${project.numericId}`}
+            data-rtm-field="coverImage"
+            data-rtm-label={`${project.title} · Kapak görseli`}
           />
         ) : (
           <div className="project-cover-missing">
@@ -79,23 +84,24 @@ export default async function ProjectPage({ params }: Props) {
       </div>
       <ProjectInformation project={project} />
       {showroom ? (
-        <section
-          aria-label="Projenin dijital showroom’u"
+        <Link
+          aria-label={`${showroom.title} 360° showroom’unu keşfedin`}
           className="site-shell project-showroom-cta"
+          href={showroomHref(showroom.slug)}
         >
           <div>
-            <p className="eyebrow">Mekânın içine adım atın</p>
+            <p className="eyebrow">{settings.siteCopy.projectTourEyebrow}</p>
             <TextAnimate animation="slideUp" as="h2" by="word" duration={0.54}>
-              {showroom.title}
+              {settings.siteCopy.projectTourHeading}
             </TextAnimate>
-            <p className="section-intro">{showroom.shortDescription}</p>
+            <p className="section-intro">{settings.siteCopy.projectTourDescription}</p>
           </div>
-          <Link className="button-primary" href={showroomHref(showroom.slug)}>
-            Projeyi 360° Keşfedin<span aria-hidden="true">↗</span>
-          </Link>
-        </section>
+          <span className="button-primary">
+            {settings.siteCopy.projectTourButton}<span aria-hidden="true">↗</span>
+          </span>
+        </Link>
       ) : null}
-      <ProjectGallery images={photos} title={project.title} />
+      <ProjectGallery images={photos} title={project.title} editor={{ target: `projects:${project.numericId}`, field: 'gallery' }} />
       {related.length ? (
         <section aria-labelledby="related-heading" className="related-projects section-space">
           <div className="site-shell">
@@ -120,7 +126,7 @@ export default async function ProjectPage({ params }: Props) {
       ) : null}
       <InterestCards variant="detail" exclude={{ type: 'project', slug: project.slug }} />
       <div className="site-shell project-return">
-        <Link href="/teklif-al" className="text-link">
+        <Link href="/iletisim" className="text-link">
           Benzer Bir Proje İçin Teklif Alın ↗
         </Link>
         <Link href="/projeler" className="button-primary">

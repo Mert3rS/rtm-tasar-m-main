@@ -20,6 +20,7 @@ type Props = {
   preview?: () => string | undefined
   endpoint?: string
   previewOnly?: boolean
+  projectContact?: boolean
 }
 type FieldProps = {
   name: string
@@ -111,6 +112,7 @@ export function InquiryForm({
   preview,
   endpoint = '/api/inquiry-submit',
   previewOnly = false,
+  projectContact = false,
 }: Props) {
   const [attachmentHandles, setAttachmentHandles] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
@@ -175,6 +177,7 @@ export function InquiryForm({
     const input = {
       ...fields,
       inquiryType: type,
+      ...(projectContact ? { projectContact: true, subject: 'Proje başvurusu' } : {}),
       ...(designQuote
         ? {
             designQuote: true,
@@ -259,11 +262,11 @@ export function InquiryForm({
       onSubmit={(event) => void submit(event)}
       noValidate
       onChange={(event) => {
-        if (!designQuote) return
+        if (!designQuote && !projectContact) return
         const fields = new FormData(event.currentTarget)
         const message = String(fields.get('message') || '')
         setNote(message)
-        onDetailsChange?.(String(fields.get('projectCity') || ''), message)
+        if (designQuote) onDetailsChange?.(String(fields.get('projectCity') || ''), message)
       }}
       aria-busy={pending}
     >
@@ -305,15 +308,6 @@ export function InquiryForm({
             error={errors.fullName}
           />
           <Field
-            name="phone"
-            label="Telefon"
-            required={type === 'quote'}
-            type="tel"
-            maxLength={35}
-            autoComplete="tel"
-            error={errors.phone}
-          />
-          <Field
             name="email"
             label="E-posta"
             required={!designQuote}
@@ -322,7 +316,16 @@ export function InquiryForm({
             autoComplete="email"
             error={errors.email}
           />
-          {type === 'contact' ? (
+          <Field
+            name="phone"
+            label="Telefon"
+            required={type === 'quote' || projectContact}
+            type="tel"
+            maxLength={35}
+            autoComplete="tel"
+            error={errors.phone}
+          />
+          {type === 'contact' && !projectContact ? (
             <Field name="subject" label="Konu" required maxLength={160} error={errors.subject} />
           ) : null}
         </div>
@@ -330,7 +333,11 @@ export function InquiryForm({
       <fieldset disabled={pending}>
         <legend>
           <span className="micro-label accent">02</span>{' '}
-          {type === 'quote' ? 'Mekânınızı anlatalım' : 'Birlikte konuşalım'}
+          {type === 'quote'
+            ? 'Mekânınızı anlatalım'
+            : projectContact
+              ? 'Projenizi anlatalım'
+              : 'Birlikte konuşalım'}
         </legend>
         <div className="inquiry-fields">
           {type === 'quote' && !designQuote ? (
@@ -405,13 +412,13 @@ export function InquiryForm({
             label={
               designQuote
                 ? 'Eklemek istedikleriniz'
-                : type === 'quote'
+                : type === 'quote' || projectContact
                   ? 'Projeniz hakkında'
                   : 'Mesajınız'
             }
             multiline
             required={!designQuote}
-            maxLength={designQuote ? 2000 : 5000}
+            maxLength={designQuote ? 2000 : projectContact ? 500 : 5000}
             placeholder={
               designQuote
                 ? 'Pencere, kolon, tesisat noktaları, cihaz ölçüleri veya özel istekleriniz.'
@@ -421,6 +428,8 @@ export function InquiryForm({
             hint={
               designQuote
                 ? `Pencere, kolon, tesisat noktaları, cihaz ölçüleri veya özel istekleriniz. ${note.length}/2000`
+                : projectContact
+                  ? `İhtiyaçlarınızı kısaca paylaşın; hassas kişisel bilgi göndermeyin. ${note.length}/500`
                 : 'İlk değerlendirme için ihtiyaçlarınızı paylaşın; hassas kişisel bilgi göndermeyin.'
             }
           />
@@ -434,20 +443,22 @@ export function InquiryForm({
             onChange={setAttachmentHandles}
             onBusy={setUploading}
           />
-          <label className="dq-check">
-            <input type="checkbox" name="requestMeasurement" />
-            Yerinde ölçü alınmasını istiyorum
-          </label>
-          <label className="dq-check">
-            <input type="checkbox" name="requestSamples" />
-            Renk ve malzeme numunelerini görmek istiyorum
-          </label>
+          <div className="inquiry-options" role="group" aria-label="İsteğe bağlı talepler">
+            <label className="inquiry-check">
+              <input type="checkbox" name="requestMeasurement" disabled={pending} />
+              <span>Yerinde ölçü alınmasını istiyorum</span>
+            </label>
+            <label className="inquiry-check">
+              <input type="checkbox" name="requestSamples" disabled={pending} />
+              <span>Renk ve malzeme numunelerini görmek istiyorum</span>
+            </label>
+          </div>
         </>
       ) : null}
       {designConfig ? (
-        <label className="dc-toggle">
-          <input disabled={previewOnly} name="designConsent" type="checkbox" required />
-          Aydınlatma metnini okudum.
+        <label className="inquiry-check inquiry-check--consent">
+          <input disabled={previewOnly || pending} name="designConsent" type="checkbox" required />
+          <span>Aydınlatma metnini okudum.</span>
         </label>
       ) : null}
       <button
@@ -458,12 +469,12 @@ export function InquiryForm({
         {previewOnly
           ? 'Gönderim henüz açık değil'
           : pending
-          ? 'Gönderiliyor…'
-          : designQuote
-            ? 'Çizimimi gönder'
-            : type === 'quote'
-              ? 'Teklif Talebini Gönder'
-              : 'Mesajı Gönder'}
+            ? 'Gönderiliyor…'
+            : designQuote
+              ? 'Çizimimi gönder'
+              : type === 'quote'
+                ? 'Teklif Talebini Gönder'
+                : 'Mesajı Gönder'}
         <span aria-hidden="true">↗</span>
       </button>
       <noscript>

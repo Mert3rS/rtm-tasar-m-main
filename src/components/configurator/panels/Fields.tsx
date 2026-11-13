@@ -200,9 +200,9 @@ export function Toggle({
     </label>
   )
 }
-export function FieldGroup({ title, children }: { title: string; children: ReactNode }) {
+export function FieldGroup({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
-    <section className="dc-field-group">
+    <section className="dc-field-group" id={id}>
       <h2>{title}</h2>
       {children}
     </section>

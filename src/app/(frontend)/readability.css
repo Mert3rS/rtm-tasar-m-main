@@ -1,0 +1,380 @@
+/* Editorial pages share the homepage's Jakarta font and readable type scale. */
+.public-site
+  :is(
+    .portfolio-page,
+    .models-page,
+    .services-page,
+    .project-detail-page,
+    .corporate-detail-page,
+    .dq-page
+  ) {
+  --editorial-copy: clamp(15px, 1.05vw, 17px);
+  --editorial-label: 13px;
+  font-family: var(--font-workshop), Arial, sans-serif;
+  font-size: var(--editorial-copy);
+}
+
+/* Services archive: match the homepage's readable editorial scale without enlarging its display titles. */
+.public-site .services-page :is(.page-intro-top .micro-label, .page-intro-top .eyebrow),
+.public-site .services-page .service-editorial-copy .micro-label,
+.public-site .services-page .page-intro-bottom {
+  font-size: var(--editorial-label);
+  line-height: 1.65;
+}
+
+.public-site .services-page :is(.page-intro-main, .service-editorial-copy) .section-intro {
+  font-size: var(--editorial-copy);
+  line-height: 1.8;
+}
+
+.public-site .services-page .service-editorial-copy .text-link {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.public-site :is(.portfolio-page, .models-page) .page-intro-main h1,
+.public-site .project-detail-heading h1,
+.public-site .corporate-detail-page .corporate-heading h1,
+.public-site .dq-intro h1 {
+  font-family: inherit;
+  font-size: clamp(38px, 5.2vw, 80px);
+  font-weight: 600;
+  line-height: 1.08;
+  letter-spacing: -0.055em;
+  overflow-wrap: anywhere;
+}
+
+.public-site
+  :is(.portfolio-page, .models-page, .project-detail-page, .corporate-detail-page)
+  :is(.section-intro, .project-richtext, .project-facts dd),
+.public-site .portfolio-card--archive .portfolio-card-description,
+.public-site .models-page :is(.catalog-card-description, .catalog-card-categories) {
+  font-size: var(--editorial-copy);
+  line-height: 1.8;
+}
+
+.public-site
+  :is(.portfolio-page, .models-page)
+  :is(
+    .micro-label,
+    .eyebrow,
+    .portfolio-card-meta,
+    .portfolio-card-footer .project-card-categories,
+    .catalog-card-caption > span,
+    .portfolio-card-cta,
+    .filter-reset,
+    .portfolio-results-heading > span,
+    .catalog-filter-field > label
+  ) {
+  font-size: var(--editorial-label);
+  line-height: 1.65;
+}
+
+.public-site
+  :is(.portfolio-page, .models-page)
+  :is(.portfolio-caption h3, .portfolio-card-content h3, .catalog-card-caption h3) {
+  font-size: clamp(24px, 2.1vw, 32px);
+  line-height: 1.3;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+}
+
+.public-site
+  :is(.portfolio-page, .models-page)
+  :is(
+    .site-dropdown__button,
+    .site-dropdown__option,
+    .filter-submit,
+    .catalog-filter > button,
+    .portfolio-pagination a
+  ) {
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 48px;
+}
+.public-site .portfolio-page .portfolio-filters :is(.filter-field, .portfolio-filter-actions) {
+  grid-template-rows: minmax(22px, auto) minmax(50px, auto) auto;
+}
+.public-site :is(.portfolio-page, .models-page) .archive-empty p {
+  font-size: var(--editorial-copy);
+  line-height: 1.8;
+}
+.public-site .models-page .catalog-card-caption {
+  flex-wrap: wrap;
+  gap: 10px 20px;
+}
+.public-site .models-page .catalog-card-caption > span {
+  white-space: normal;
+}
+.public-site .portfolio-card-footer {
+  flex-wrap: wrap;
+  row-gap: 12px;
+}
+.public-site :is(.project-detail-page, .corporate-detail-page) .project-richtext {
+  max-width: 72ch;
+  color: var(--foreground);
+}
+
+/* Model details need a more generous reading scale than compact catalogue UI. */
+.public-site .corporate-detail-page--model {
+  --editorial-copy: clamp(18px, 1.25vw, 21px);
+  --editorial-label: clamp(14px, 0.95vw, 16px);
+}
+
+.public-site
+  .corporate-detail-page--model
+  :is(
+    .micro-label,
+    .eyebrow,
+    .catalog-card-caption > span,
+    .portfolio-card-meta,
+    .portfolio-card-footer .project-card-categories,
+    .portfolio-card-cta
+  ) {
+  font-size: var(--editorial-label);
+  line-height: 1.7;
+}
+
+.public-site .corporate-detail-page--model :is(.section-intro, .project-richtext) {
+  font-size: var(--editorial-copy);
+  line-height: 1.8;
+}
+
+.public-site .corporate-detail-page--model :is(.text-link, .corporate-model-type) {
+  font-size: clamp(16px, 1.05vw, 18px);
+  line-height: 1.6;
+}
+
+.public-site
+  .corporate-detail-page--model
+  :is(.catalog-card-categories, .catalog-card-description) {
+  font-size: clamp(16px, 1.1vw, 18px);
+  line-height: 1.75;
+}
+
+/* Project details use the same readable editorial scale, including facts and CTAs. */
+.public-site .project-detail-page {
+  --editorial-copy: clamp(18px, 1.25vw, 21px);
+  --editorial-label: clamp(14px, 0.95vw, 16px);
+}
+
+.public-site
+  .project-detail-page
+  :is(
+    .micro-label,
+    .eyebrow,
+    .project-facts dt,
+    .portfolio-card-meta,
+    .portfolio-card-footer .project-card-categories,
+    .portfolio-card-cta,
+    .catalog-card-caption > span
+  ) {
+  font-size: var(--editorial-label);
+  line-height: 1.7;
+}
+
+.public-site
+  .project-detail-page
+  :is(.section-intro, .project-richtext, .project-facts dd) {
+  font-size: var(--editorial-copy);
+  line-height: 1.8;
+}
+
+.public-site .project-detail-page .project-lead {
+  font-size: clamp(20px, 1.45vw, 24px);
+  line-height: 1.75;
+}
+
+.public-site .project-detail-page :is(.text-link, .button-primary) {
+  font-size: clamp(16px, 1.05vw, 18px);
+  line-height: 1.55;
+}
+
+.public-site .project-detail-page .project-showroom-cta {
+  color: #fff;
+  text-decoration: none;
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.public-site
+  .project-detail-page
+  .project-showroom-cta
+  :is(.eyebrow, h2, .section-intro) {
+  color: #fff;
+}
+
+.public-site .project-detail-page .project-showroom-cta .eyebrow {
+  font-size: clamp(16px, 1.05vw, 18px);
+}
+
+.public-site .project-detail-page .project-showroom-cta h2 {
+  font-size: clamp(36px, 3.25vw, 52px);
+  line-height: 1.12;
+}
+
+.public-site .project-detail-page .project-showroom-cta .section-intro {
+  font-size: clamp(19px, 1.35vw, 22px);
+  line-height: 1.7;
+}
+
+.public-site .project-detail-page .project-showroom-cta:is(:hover, :focus-visible) {
+  background: color-mix(in srgb, var(--workshop-light) 5%, var(--workshop-dark));
+  box-shadow: 0 0 0 2px var(--workshop-light);
+}
+
+.public-site .project-detail-page .project-showroom-cta:focus-visible {
+  outline: 3px solid var(--workshop-light);
+  outline-offset: 4px;
+}
+
+.public-site
+  .project-detail-page
+  :is(.portfolio-caption .muted, .catalog-card-categories, .catalog-card-description) {
+  font-size: clamp(16px, 1.1vw, 18px);
+  line-height: 1.75;
+}
+
+/* Quote review: one page scroll, generous copy and the public site's own colours. */
+.public-site .dq-page {
+  width: min(100% - 96px, 1440px);
+  max-width: 1440px;
+  padding: 64px 0 96px;
+  gap: clamp(32px, 4vw, 72px);
+}
+.public-site .dq-design-column {
+  position: static;
+  max-height: none;
+  overflow: visible;
+  padding: clamp(20px, 2.2vw, 36px);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+}
+.public-site .dq-intro > p:not(.eyebrow, .dq-progress),
+.public-site .dq-intro aside,
+.public-site .dq-unavailable p,
+.public-site
+  .dq-design-column
+  :is(.dq-kitchen-plan, .dq-whatsapp-share > p, .dq-materials > div, dl > div),
+.public-site
+  .dq-page
+  :is(.inquiry-check, .inquiry-field > label, .privacy-notice, .inquiry-form legend) {
+  font-size: var(--editorial-copy);
+  line-height: 1.8;
+}
+.public-site .dq-unavailable {
+  padding: 24px;
+  border-radius: 10px;
+  background: var(--surface);
+}
+.public-site .dq-unavailable h2 {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+.public-site .dq-design-column h2 {
+  font-size: clamp(26px, 2.7vw, 38px);
+  line-height: 1.3;
+}
+.public-site .dq-dimensions {
+  font-size: clamp(26px, 2.6vw, 38px);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.public-site
+  .dq-page
+  :is(
+    .eyebrow,
+    .dq-progress,
+    .dq-dimension-label,
+    .dq-disclaimer,
+    .dq-materials small,
+    .dq-message,
+    .dq-message pre,
+    .dq-card-top a,
+    .dq-dimensions small
+  ) {
+  font-size: var(--editorial-label) !important;
+  line-height: 1.75;
+}
+.public-site
+  .dq-page
+  :is(
+    .dq-whatsapp-button,
+    .dq-actions button,
+    .dq-actions a,
+    .dq-expand,
+    [role='tab'],
+    .dq-message summary
+  ) {
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+  min-height: 44px;
+}
+.public-site .dq-page :is(.dq-card-top a, .dq-actions button, .dq-actions a) {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.public-site .dq-design-column dl > div {
+  grid-template-columns: minmax(90px, 0.42fr) minmax(0, 1fr);
+  gap: 12px 18px;
+  padding-block: 18px;
+}
+.public-site .dq-design-column :is(dt, dd, .dq-card-top > *) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.public-site .dq-enlarge {
+  font:
+    500 13px/1.5 var(--font-workshop),
+    Arial,
+    sans-serif;
+  padding: 8px;
+}
+.public-site .dq-page .inquiry-field :is(input:not([type='checkbox']), textarea, select) {
+  font-family: inherit;
+  font-size: 16px;
+}
+
+@media (max-width: 1023px) {
+  .public-site .dq-page {
+    width: min(100% - 48px, 800px);
+    padding-block: 32px 64px;
+  }
+  .public-site .dq-design-column:not(.dq-details-open) :is(.dq-kitchen-plan, .dq-whatsapp-share) {
+    grid-column: 1 / -1;
+  }
+  .public-site .dq-design-column:not(.dq-details-open) .dq-dimensions {
+    font-size: 24px;
+  }
+}
+@media (max-width: 600px) {
+  .public-site :is(.portfolio-page, .models-page) .page-intro-main h1,
+  .public-site .project-detail-heading h1,
+  .public-site .corporate-detail-page .corporate-heading h1,
+  .public-site .dq-intro h1 {
+    font-size: 43px;
+  }
+  .public-site .dq-page {
+    width: calc(100% - 28px);
+  }
+  .public-site .dq-card-top {
+    flex-wrap: wrap;
+    gap: 6px 18px;
+  }
+  .public-site .dq-design-column {
+    padding: 18px;
+  }
+  .public-site .dq-design-column dl > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+  .public-site .dq-page .dq-progress {
+    letter-spacing: 0;
+  }
+}

@@ -1,6 +1,5 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
-import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { tr } from 'payload/i18n/tr'
@@ -9,7 +8,7 @@ import sharp from 'sharp'
 
 import { Cities } from './collections/Cities'
 import { Countries } from './collections/Countries'
-import { Media } from './collections/Media'
+import { Media, withMediaFilenameCell } from './collections/Media'
 import { Projects } from './collections/Projects'
 import { ProjectCategories } from './collections/ProjectCategories'
 import { Users } from './collections/Users'
@@ -32,14 +31,10 @@ import { AssistantFeedback } from './collections/AssistantFeedback'
 import { ConsentRecords } from './collections/ConsentRecords'
 import { DesignShares } from './collections/DesignShares'
 import { InquiryAttachments } from './collections/InquiryAttachments'
+import { brandIcons } from './lib/brandMetadata'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
-const databaseUri =
-  process.env.DATABASE_URI ||
-  process.env.DATABASE_URL ||
-  process.env.DATABASE_POSTGRES_URL ||
-  ''
 
 export default buildConfig({
   i18n: {
@@ -48,6 +43,10 @@ export default buildConfig({
   },
   admin: {
     user: Users.slug,
+    meta: {
+      icons: brandIcons,
+      titleSuffix: '— RTM Tasarım',
+    },
     importMap: {
       baseDir: path.resolve(dirname),
     },
@@ -86,8 +85,38 @@ export default buildConfig({
     ConsentRecords,
     DesignShares,
     InquiryAttachments,
-  ],
-  globals: [SiteSettings, AboutPage, AssistantSettings],
+  ].map((collection) => ({
+    ...collection,
+    admin: {
+      ...collection.admin,
+      components: {
+        ...collection.admin?.components,
+        edit: {
+          ...collection.admin?.components?.edit,
+          beforeDocumentControls: [
+            ...(collection.admin?.components?.edit?.beforeDocumentControls || []),
+            '/components/admin/AdminEditorBridge#AdminEditorBridge',
+          ],
+        },
+      },
+    },
+  })),
+  globals: [SiteSettings, AboutPage, AssistantSettings].map((global) => ({
+    ...global,
+    admin: {
+      ...global.admin,
+      components: {
+        ...global.admin?.components,
+        elements: {
+          ...global.admin?.components?.elements,
+          beforeDocumentControls: [
+            ...(global.admin?.components?.elements?.beforeDocumentControls || []),
+            '/components/admin/AdminEditorBridge#AdminEditorBridge',
+          ],
+        },
+      },
+    },
+  })),
   email: configuredEmailAdapter(),
   upload: {
     limits: { fileSize: uploadLimitBytes() },
@@ -102,22 +131,9 @@ export default buildConfig({
   },
   db: postgresAdapter({
     pool: {
-      connectionString: databaseUri,
+      connectionString: process.env.DATABASE_URI || '',
     },
   }),
   sharp,
-  plugins: [
-    vercelBlobStorage({
-      addRandomSuffix: true,
-      alwaysInsertFields: true,
-      clientUploads: true,
-      collections: {
-        media: {
-          disablePayloadAccessControl: true,
-        },
-      },
-      enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
-      token: process.env.BLOB_READ_WRITE_TOKEN,
-    }),
-  ],
-})
+  plugins: [],
+}).then(withMediaFilenameCell)

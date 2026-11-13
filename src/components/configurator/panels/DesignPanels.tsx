@@ -32,7 +32,8 @@ import { KitchenStylePresets, KitchenGlassPanel } from './KitchenStylePanel'
 import type { KitchenSelection } from '@/lib/configurator/kitchenSchema'
 import { WardrobeStartPanel, WardrobeSectionsPanel, WardrobeInteriorPanel, WardrobeStylePanel, WardrobeDetailsPanel } from './WardrobePanels'
 import { assertWardrobeFits } from '@/lib/configurator/wardrobe'
-import { BathroomStartPanel, BathroomSectionsPanel, BathroomInteriorPanel, BathroomStylePanel, BathroomDetailsPanel } from './BathroomPanels'
+import { BathroomStartPanel, BathroomSectionsPanel, BathroomInteriorPanel, BathroomStylePanel, BathroomDetailsPanel, BathroomRowPicker } from './BathroomPanels'
+import { BathroomSidePanel } from './BathroomSidePanel'
 import { TvStartPanel, TvSectionsPanel, TvInteriorPanel, TvStylePanel, TvDetailsPanel } from './TvPanels'
 import { assertTvFits } from '@/lib/configurator/tv'
 import type { TvSelection } from '@/lib/configurator/tvSchema'
@@ -462,8 +463,10 @@ export function FinishPanel(props: PanelProps) {
   const [ralDraft, setRalDraft] = useState<{ base: string; value: string } | null>(null),
     [error, setError] = useState('')
   const ral = ralDraft?.base === o.ral ? ralDraft.value : o.ral
+  if (c.bathroom && props.bathroomSelection?.row === 'side') return <><BathroomRowPicker {...props} /><BathroomSidePanel {...props} /></>
   return (
     <>
+      {c.bathroom ? <BathroomRowPicker {...props} /> : null}
       {c.k ? <KitchenStylePresets config={c} edit={edit} onApply={() => { setRalDraft(null); setError('') }} /> : null}
       {c.wardrobe ? <WardrobeStylePanel {...props} onApply={() => { setRalDraft(null); setError('') }} /> : null}
       {c.entryway ? <EntrywayStylePanel {...props} onApply={() => { setRalDraft(null); setError('') }} /> : null}
@@ -526,7 +529,7 @@ export function FinishPanel(props: PanelProps) {
           ))}
         </div>
       </FieldGroup>
-      <FieldGroup title="Renk paleti">
+      <FieldGroup title="Renk paleti" id="design-color-palette">
         <Colors
           value={o.renk}
           onChange={(v) =>

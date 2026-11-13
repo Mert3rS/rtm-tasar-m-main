@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { isAuthenticated } from '../access/isAuthenticated'
 import { activePublishedContent } from '../access/publishedContent'
 import { slugField } from '../fields/slug'
+import { photoGuideField } from '../fields/photoGuide'
 
 export const Services: CollectionConfig = {
   slug: 'services',
@@ -19,6 +20,7 @@ export const Services: CollectionConfig = {
     read: activePublishedContent,
   },
   fields: [
+    photoGuideField('services'),
     {
       type: 'tabs',
       tabs: [
@@ -27,14 +29,41 @@ export const Services: CollectionConfig = {
           fields: [
             { name: 'title', type: 'text', required: true, maxLength: 160, label: 'Hizmet adı' },
             slugField,
-            { name: 'shortDescription', type: 'textarea', maxLength: 320, label: 'Kısa açıklama' },
-            { name: 'description', type: 'richText', label: 'Hizmet anlatımı' },
-            { name: 'coverImage', type: 'upload', relationTo: 'media', label: 'Kapak görseli' },
+            {
+              name: 'shortDescription',
+              type: 'textarea',
+              maxLength: 320,
+              label: 'Kısa açıklama',
+              admin: { description: 'Hizmet arşivi ve ana sayfadaki hizmet kartının kısa metni.' },
+            },
+            {
+              name: 'description',
+              type: 'richText',
+              label: 'Hizmet anlatımı',
+              admin: {
+                description:
+                  'Hizmet detayında gösterilen uzun anlatım; kartların kısa metni ayrıdır.',
+              },
+            },
+            {
+              name: 'coverImage',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Kapak görseli',
+              admin: {
+                description:
+                  'Ana sayfanın çalışma alanları bölümü, hizmet listesi ve hizmet detayının kapağı. Yatay fotoğraf kullanın.',
+              },
+            },
             {
               name: 'galleryImages',
               type: 'array',
               maxRows: 30,
               label: 'Galeri',
+              admin: {
+                description:
+                  'Hizmet detayındaki açılır fotoğraf albümü. Ana sayfa kartının görselini değiştirmek için Kapak görseli alanını kullanın.',
+              },
               fields: [
                 {
                   name: 'image',

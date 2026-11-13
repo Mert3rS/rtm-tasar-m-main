@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 import { isAuthenticated } from '../access/isAuthenticated'
 import { publishedContent } from '../access/publishedContent'
 import { slugField } from '../fields/slug'
+import { photoGuideField } from '../fields/photoGuide'
 
 export const DesignModels: CollectionConfig = {
   slug: 'design-models',
@@ -19,6 +20,7 @@ export const DesignModels: CollectionConfig = {
     read: publishedContent,
   },
   fields: [
+    photoGuideField('design-models'),
     {
       type: 'tabs',
       tabs: [
@@ -27,14 +29,40 @@ export const DesignModels: CollectionConfig = {
           fields: [
             { name: 'title', type: 'text', required: true, maxLength: 160, label: 'Model adı' },
             slugField,
-            { name: 'shortDescription', type: 'textarea', maxLength: 320, label: 'Kısa açıklama' },
-            { name: 'description', type: 'richText', label: 'Model anlatımı' },
-            { name: 'coverImage', type: 'upload', relationTo: 'media', label: 'Kapak görseli' },
+            {
+              name: 'shortDescription',
+              type: 'textarea',
+              maxLength: 320,
+              label: 'Kısa açıklama',
+              admin: {
+                description: 'Model katalog kartında ve ana sayfadaki seçili modelde görünen özet.',
+              },
+            },
+            {
+              name: 'description',
+              type: 'richText',
+              label: 'Model anlatımı',
+              admin: { description: 'Model detay sayfasındaki uzun metin.' },
+            },
+            {
+              name: 'coverImage',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Kapak görseli',
+              admin: {
+                description:
+                  'Model arşivi, model detayı ve seçiliyse ana sayfa koleksiyonundaki fotoğraf.',
+              },
+            },
             {
               name: 'galleryImages',
               type: 'array',
               maxRows: 30,
               label: 'Model galerisi',
+              admin: {
+                description:
+                  'Model detayında açılan fotoğraf albümü. Aynı fotoğrafı birden fazla kayıtta seçmek ortak medya kullanır.',
+              },
               fields: [
                 {
                   name: 'image',

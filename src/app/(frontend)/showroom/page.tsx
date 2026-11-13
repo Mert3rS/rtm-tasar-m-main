@@ -5,20 +5,23 @@ import { redirect } from 'next/navigation'
 import { ShowroomCard } from '@/components/showroom/ShowroomCard'
 import { getShowroomsPage } from '@/lib/showroomData'
 import { portfolioMetadata } from '@/lib/seo'
+import { getPublicSiteSettings } from '@/lib/siteSettings'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const query = await searchParams
+  const settings = await getPublicSiteSettings()
   return portfolioMetadata({
-    title: 'Dijital Showroom | RTM Tasarım',
-    description: 'RTM Tasarım mekânlarını 360 derece panoramik sanal turlarla keşfedin.',
+    title: `${settings.siteCopy.showroomTitle} ${settings.siteCopy.showroomTitleSecond} | ${settings.companyName}`,
+    description: settings.siteCopy.showroomDescription,
     path: '/showroom',
     noindex: Object.keys(query).length > 0,
   })
 }
 
 export default async function ShowroomsPage({ searchParams }: Props) {
+  const settings = await getPublicSiteSettings()
   const query = await searchParams
   const page =
     typeof query.sayfa === 'string' && /^\d{1,6}$/.test(query.sayfa)
@@ -31,15 +34,15 @@ export default async function ShowroomsPage({ searchParams }: Props) {
     <main className="showroom-list-page" id="main-content">
       <PageIntro
         number="04"
-        eyebrow="DİJİTAL DENEYİM"
+        eyebrow={settings.siteCopy.showroomEyebrow}
         title={
           <>
-            Dijital
+            {settings.siteCopy.showroomTitle}
             <br />
-            Showroom<span className="accent">.</span>
+            {settings.siteCopy.showroomTitleSecond}<span className="accent">.</span>
           </>
         }
-        description="Ekranın ötesine geçin. Mekânların detaylarını interaktif bir deneyimle inceleyin."
+        description={settings.siteCopy.showroomDescription}
       />
       <section aria-label="Showroom koleksiyonu" className="site-shell showroom-archive">
         {result.showrooms.length ? (

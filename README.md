@@ -1,5 +1,9 @@
 # RTM Tasarım
 
+Sitedeki bütün aktif görsel alanlarının CMS kaynakları ve kullanım açıklamaları: [Fotoğraf yerleşim haritası](docs/photo-placement-map.md). Admin → Site içeriği ekranında sayfa/kayıt seçerek kapak, galeri, ekip portresi, panorama ve paylaşım görsellerine doğrudan ulaşabilirsiniz.
+
+Ana sayfanın sinematik açılışı `/admin?page=home` ekranında **İlk açılış → Mekân → Malzeme → Detay → Kapanış** olarak gösterilir. **Site ayarları → Ana sayfa açılışı** sekmesi yedek görseli, **Ana sayfa metinleri** sekmesi açılış ve kapanış metinlerini yönetir. Animasyon kareleri uygulama dosyalarından gelir. Önceki dokuzlu kolaj seçimleri silinmez; yalnızca merkez seçim yedek görsel olarak kullanılır. Ayrıntılar: [Admin içerik stüdyosu](docs/admin-content-studio.md). Bu revizyon veritabanı şemasını değiştirmez.
+
 RTM Tasarım'ın kurumsal web sitesi ve içerik yönetim altyapısıdır. Uygulama; public web arayüzünü, Payload CMS yönetim panelini ve API katmanını aynı Next.js projesinde birleştirir.
 
 Depoda **Faz 1–7** kurumsal site/CMS, portföy, showroom, iletişim ve katalog altyapısı; **Faz 8–8.2** mobilya tasarım atölyesi, **Faz 9** haricî servis kullanmayan site asistanı ve **Faz 10** çerez onayı/ilgi bazlı kişiselleştirme bulunur. Güncel public tasarım ve ana sayfa revizyonları [tasarım notlarında](docs/homepage-design.md) açıklanır; aşağıdaki eski faz bölümleri geliştirme geçmişini de içerir.
@@ -68,15 +72,18 @@ Payload yönetim paneli: [http://localhost:3000/admin](http://localhost:3000/adm
 
 | Değişken | Açıklama |
 | --- | --- |
-| `DATABASE_URI` | PostgreSQL bağlantı adresi; tanımlı değilse Vercel entegrasyonlarının `DATABASE_URL` veya `DATABASE_POSTGRES_URL` değişkeni kullanılır |
+| `DATABASE_URI` | PostgreSQL bağlantı adresi |
 | `PAYLOAD_SECRET` | Payload oturum ve token imzalama anahtarı; gizli tutulmalıdır |
 | `NEXT_PUBLIC_SERVER_URL` | Uygulamanın public adresi |
 | `SITE_URL` | Gerçek HTTPS production kökü; canonical ve sosyal paylaşım URL'leri için önceliklidir. Yerelde boş bırakın. |
-| `BLOB_READ_WRITE_TOKEN` | Production medya yüklemelerini Vercel Blob'da kalıcı tutar; Vercel Blob bağlantısı tarafından sağlanır ve gizli tutulmalıdır |
 
 `.env` Git tarafından yok sayılır. Gerçek sırları `.env.example` dosyasına yazmayın.
 
 ## Geliştirme komutları
+
+Müşteri panelinin soldan sayfa seçimi, gerçek site önizlemesi, yan panelde native düzenleme, içerik haritası ve ayrıntılı geliştirme promptu: [Admin içerik stüdyosu](docs/admin-content-studio.md).
+
+Mobil sayfa, dokunmatik kullanım ve admin test kapsamı: [Mobil uyumluluk kontrolü](docs/mobile-audit.md).
 
 ```bash
 pnpm dev                 # Geliştirme sunucusu
@@ -359,15 +366,15 @@ Yaygın sorunlar: Boş listede yayın durumunu kontrol edin. Sahne görünmüyor
 1. **Şirket ve iletişim:** şirket adı/açıklaması, isteğe bağlı footer logosu, public e-posta, telefon, WhatsApp, adres, şehir/ülke ve harita bağlantısı. Gerçek, onaylı bilgileri girin; boş bilgiler gizlenir. Varsayılan RTM wordmark'ı ve mevcut tasarım korunur.
 2. **Sosyal medya:** Instagram, Facebook, LinkedIn, YouTube için HTTPS adresleri. Kimlik bilgisi içeren/geçersiz URL kabul edilmez.
 3. **Site ve formlar:** varsayılan SEO başlığı/açıklaması, iletişim ve teklif formu açma/kapama, private bildirim alıcısı. SEO varsayılanları root metadata'ya uygulanır; proje/showroom/sayfa özel metadatası önceliklidir.
-4. **Aydınlatma metni:** müşteri ve hukuk danışmanı tarafından onaylı gerçek KVKK aydınlatma metni veya HTTPS bağlantısı. Otomatik hukuki metin üretilmez. **Metin veya bağlantı bulunmadan formlar hem arayüzde hem sunucuda kapalıdır.** Bağlantının içeriğinin/onayının takibi içerik yöneticisinin sorumluluğudur.
+4. **Aydınlatma metni:** müşteri tarafından 11 Kasım 2026'da sağlanan şirket adı, iletişim adresi ve 30 günlük saklama kararıyla yapılandırılan KVKK aydınlatma metni veya HTTPS bağlantısı. **Metin veya bağlantı bulunmadan formlar hem arayüzde hem sunucuda kapalıdır.** Metin `/kvkk-aydinlatma-metni` sayfasında, formda ve footer'da görünür; şirket adresi ve altyapı değişiklikleri yayından önce güncellenmelidir.
 
 Hiçbir iletişim bilgisi otomatik doldurulmaz. İsteğe bağlı alanların yokluğu sayfayı bozmaz. `site-settings` REST/GraphQL okuması ve güncellemesi yalnızca mevcut `users` yöneticilerine açıktır. Frontend `getPublicSiteSettings()` üzerinden açık bir public alan seçimiyle hafif DTO alır. Bu trusted Local API okuması kasıtlı `overrideAccess: true` kullanır; bildirim alıcısı ve sunucu sırları DTO'ya alınmaz. SMTP parolaları CMS'ye kaydedilmez. React cache yalnızca aynı istekte tekrarları birleştirir; ayar değişiklikleri sonraki sayfa isteğinde görünür.
 
 ### Form ve başvuru akışı
 
 - `/iletisim`: gerçek ayarlar, sosyal/harita/WhatsApp bağlantıları; ad soyad, e-posta, isteğe bağlı telefon, konu ve mesaj.
-- `/teklif-al`: ad soyad, e-posta, telefon, mevcut aktif proje kategorisi, serbest şehir, proje açıklaması; isteğe bağlı alan, bütçe aralığı ve iletişim tercihi. Kategori koleksiyonu çoğaltılmaz. Aktif kategori yoksa **Genel proje başvurusu** seçilebilir; sunucu kategori durumunu tekrar doğrular.
-- Ana sayfa “Projenizi Konuşalım”, proje detayı “Benzer Bir Proje İçin Teklif Alın”, showroom “Bu Tasarım İçin Bilgi Alın” bağlantıları `/teklif-al` adresine gider. URL'ye kişisel bilgi veya doğrulanmamış proje metadata'sı taşınmaz.
+- İletişim bilgileri ile ad soyad, e-posta, telefon ve en fazla 500 karakterlik proje açıklaması isteyen sade başvuru formu `/iletisim` sayfasında toplanır. Eski `/teklif-al` adresi kalıcı olarak `/iletisim` adresine yönlenir.
+- Ana sayfa, proje detayı ve showroom iletişim çağrıları `/iletisim` adresine gider. URL'ye kişisel bilgi veya doğrulanmamış proje metadata'sı taşınmaz.
 
 Sayfalar ve açıklamalar Server Component; yalnızca form etkileşimi küçük Client Component'tir. Mevcut tema, reduced-motion ve navigasyon kullanılır. Açık label, gerekli alan işareti, alan hatası/özet bağlantıları, pending/disabled, odaklanan başarı/hata duyuruları ve 320 px düzeni vardır. Form yanıtı başarılı saklamadan sonra gösterilir; e-posta gönderildiği veya belirli saatte dönüş yapılacağı söylenmez. Form değerleri localStorage, analytics veya URL'ye yazılmaz. JavaScript çalışmazsa ziyaretçi yapılandırılmış doğrudan iletişim kanallarını kullanabilir.
 
@@ -379,7 +386,7 @@ Yeni büyük form/validasyon kütüphanesi eklenmedi. Ortak `contactValidation.t
 
 Koleksiyonda public read/create/update/delete kapalıdır; mevcut kimliği doğrulanmış `users` hesapları yönetici olarak kullanılır, yeni müşteri hesabı/rol sistemi yoktur. Public `/api/inquiry-submit` yalnızca **tek bir `inquiries` kaydı oluşturabilir**. Local API'nin kurulu sürümde varsayılan `overrideAccess: true` olduğu kaynak koddan doğrulanmıştır; endpoint bunu açıkça kullanır ve yalnızca doğrulanmış alanlardan sabit bir create nesnesi kurar. Status, priority, internalNotes, notificationStatus gibi client alanları reddedilir. Public yanıtta başvuru belgesi/ID/iç not bulunmaz. Protected alanları değiştiren public update veya keyfi collection parametresi yoktur.
 
-Başvurular için otomatik silme/retention süresi eklenmedi. **Arşivleme silme değildir.** Yetkili admin native Delete ile silebilir. Müşterinin onaylı saklama/silme politikası, veritabanı yedekleri ve SMTP sağlayıcısındaki kopyalar için süreç production öncesinde belirlenmelidir. Ayrıntılı kişisel veri loglama ve başvuru versiyon geçmişi eklenmedi.
+Başvurular ve başvuruya bağlanmış özel dosyalar en fazla 30 gün tutulur. Vercel production deployment'ında `vercel.json`, her gün 02:00 UTC'de `GET /api/cron/inquiry-retention` çağrısını yapar; endpoint yalnızca `CRON_SECRET` Bearer değeriyle çalışır ve süresi dolmuş kayıtları 100'lük gruplar hâlinde, tekrarlanabilir biçimde siler. Tek çalıştırmada en fazla 1000 başvuru ve 1000 ek temizlenir; `hasMore` sonucu izlenmelidir. **Arşivleme silme değildir.** Veritabanı yedekleri ve e-posta sağlayıcısındaki kopyalar ayrıca aynı politikaya göre yapılandırılmalıdır. Ayrıntılı kişisel veri loglama ve başvuru versiyon geçmişi eklenmedi.
 
 ### Spam ve tekrar gönderim koruması
 
@@ -421,7 +428,7 @@ Kayıt önce veritabanına yazılır; ardından aynı istek içinde tek bildirim
 
 WhatsApp numarasını uluslararası ülke koduyla girin. Yerel 0 önekli veya geçersiz numarada bağlantı gösterilmez. Normalizasyon sonucu `https://wa.me/<digits>?text=...` oluşturulur. Bağlantı yalnızca kullanıcının tıklamasıyla açılır; otomatik mesaj/API yoktur. İletişim, teklif ve footer'da aynı küçük bileşen kullanılır.
 
-Production öncesi: gerçek şirket/iletişim bilgileri, onaylı aydınlatma metni, form bayrakları, HTTPS origin, uzun ortak PAYLOAD_SECRET, kontrollü migration, kalıcı medya, proxy body/time sınırları, SMTP ve doğrulanmış alıcılar, yönetici hesapları ve veri saklama süreci tamamlanmalıdır. Aydınlatma metni ve hosting/SMTP sağlayıcılarına kişisel veri aktarımı müşterinin hukuk danışmanı tarafından değerlendirilmelidir; uygulama hukuki uygunluk garantisi vermez.
+Production öncesi: gerçek şirket adresi, HTTPS origin, uzun ortak `PAYLOAD_SECRET`, uzun rastgele `CRON_SECRET`, Vercel deployment, Vercel Marketplace üzerinden Neon PostgreSQL bağlantısı, kontrollü migration, kalıcı medya, proxy body/time sınırları, SMTP ve doğrulanmış alıcılar ile yönetici hesapları tamamlanmalıdır. Vercel/Neon ve varsa SMTP sağlayıcısına kişisel veri aktarımı ile KVKK m.9 güvenceleri hukuk danışmanı tarafından değerlendirilmelidir; uygulama hukuki uygunluk garantisi vermez.
 
 ### Migration ve testler
 
@@ -652,7 +659,7 @@ Her cevap ya admin'in onayladığı **Asistan cevapları/SSS** içeriğinden ya 
 
 - **Asistan → Asistan ayarları** (`assistant-settings`, admin-only): aç/kapat (varsayılan kapalı), görünen ad, kısa tanıtım, karşılama mesajı, en fazla 6 hızlı soru, anlaşılamadı mesajı, ek eş anlamlılar (her satıra virgülle ayrılmış kelimeler), yanıtlanamayan soruları kaydetme (varsayılan kapalı) ve saklama süresi.
 - **Asistan cevapları** (`assistant-answers`, native draft/publish): başlık, konu, tetikleyiciler, örnek sorular, Lexical cevap, en fazla 4 aksiyon düğmesi (yalnızca izinli site içi route, Site Ayarları bağlantısı veya çerez tercihleri paneli), öncelik, aktiflik. Aynı konudaki yerleşik davranıştan önceliklidir; kişisel veri ve bağlantı kuralları yine geçerlidir.
-- **Sık sorulan sorular** (`faqs`, native draft/publish): asistan arar; yayınlananlar `/sss` sayfasında gösterilir.
+- **Sık sorulan sorular** (`faqs`, native draft/publish): yayınlanan içerikler yalnızca asistan yanıtlarında kullanılır; ayrı bir public SSS sayfası yoktur.
 - **Yanıtlanamayan sorular** (`assistant-unanswered`, private): yalnızca admin anahtarı açık **ve** ziyaretçi Analitik iznini vermişse (sunucu cookie'den doğrular) düşük güvenli sorular e-posta/telefon/uzun sayılar maskelenerek, ziyaretçi kimliği ve IP olmadan, normalize biçime göre sayaçla birleştirilir. Süresi dolanlar sonraki yazımda silinir.
 - **Asistan geri bildirimleri** (`assistant-feedback`, private): 👍/👎 yalnızca Analitik izniyle, cevap konusu bazında anonim toplam sayaçtır.
 
@@ -842,8 +849,24 @@ Paylaşılabilir yerel çıktılar `.tools/phase8.3-qa/` altında korunmuştur: 
 - Node.js sunucusu ve erişilebilir bir PostgreSQL servisi gerekir.
 - `DATABASE_URI`, `PAYLOAD_SECRET` ve `NEXT_PUBLIC_SERVER_URL` platformun secret/environment yönetiminde tanımlanmalıdır.
 - Production öncesi migration'lar çalıştırılmalıdır.
-- `20261107_144050_vercel_blob_media` migration'ı Media kayıtlarına yalnızca Blob nesne anahtarı alanlarını ekler; mevcut medya kaydını veya dosyayı silmez.
-- Public `media` koleksiyonu `BLOB_READ_WRITE_TOKEN` bulunduğunda Vercel Blob kullanır ve tarayıcıdan doğrudan yükleme ile Vercel'in sunucu yükleme sınırını aşmaz. Yerelde token yoksa mevcut yerel depolama devam eder.
-- Private `inquiry-attachments` public Blob'a bağlanmamıştır. Teklif eki özelliği açılmadan önce yetkili indirmeyi koruyan kalıcı private storage tasarlanmalıdır.
+- `/media` yerel dosya sistemi yerine kalıcı, S3 uyumlu bir obje depolamaya taşınmalıdır.
 - HTTPS kullanılmalı; veritabanı ve yönetim sırları repoya eklenmemelidir.
-# rtm-tasar-m-main
+
+### Admin teslim merkezi ve yönetilebilir arayüz metinleri
+
+Admin ana ekranındaki **Yayına hazırlık** alanı; yayınlanmış proje, hizmet, model,
+showroom ve 360° sahneleri; iletişim/KVKK, SMTP bildirimi, SEO/SITE_URL, çerez
+politikası ve adres durumunu tek yerde gösterir. Kartlar ilgili native Payload
+düzenleme ekranına gider; secret değerleri browser'a aktarılmaz.
+
+`Site ayarları → Sayfa ve menü metinleri` sekmesi header/footer bağlantıları,
+arşiv girişleri, iletişim/teklif girişleri, ortak CTA, proje 360° çağrısı ve 404
+metinlerini yönetir. `Site ayarları → Şirket ve iletişim → Logo` alanı doluysa
+header ve footer yüklenen logoyu, boşsa yerleşik RTM logosunu kullanır.
+
+`20261111_182353_admin_delivery_copy` migration'ı yalnızca `site_settings`
+tablosuna nullable/default arayüz metni kolonları ekler; mevcut içerik veya medya
+silmez. Yerel push veritabanında migration zincirini çalıştırmayın. Shared ve
+production ortamda mevcut baseline benimseme prosedüründen sonra kontrollü release
+adımında uygulayın. `down` özelleştirilmiş arayüz metinlerini kaldıracağı için önce
+içerik dışa aktarımı alınmalıdır.

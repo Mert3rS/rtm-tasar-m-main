@@ -1,3 +1,4 @@
+import { EditableRegion } from '@/components/site/EditableRegion'
 import Image from 'next/image'
 import Link from 'next/link'
 import type { CatalogCardData } from '@/types/catalog'
@@ -5,7 +6,7 @@ import { catalogHref } from '@/lib/catalogQuery'
 
 export function CatalogCard({ item, index = 0 }: { item: CatalogCardData; index?: number }) {
   return (
-    <article className="catalog-card" data-reveal>
+    <EditableRegion as="article" className="catalog-card" data-reveal data-rtm-edit={`${item.kind === 'model' ? 'design-models' : 'services'}:${item.id}`} data-rtm-field="coverImage" data-rtm-label={`${item.title} · Kapak ve açıklamalar`}>
       <Link href={catalogHref(item.kind, item.slug)}>
         <div className="catalog-card-image">
           {item.cover ? (
@@ -41,6 +42,6 @@ export function CatalogCard({ item, index = 0 }: { item: CatalogCardData; index?
       {item.shortDescription ? (
         <p className="catalog-card-description">{item.shortDescription}</p>
       ) : null}
-    </article>
+    </EditableRegion>
   )
 }

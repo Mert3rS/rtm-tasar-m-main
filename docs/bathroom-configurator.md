@@ -15,3 +15,89 @@ Altı malzeme/renk kombinasyonu, ortak palet/RAL/gövde/kulp, batarya metali, ba
 `bathroomGeometry()` teknik çizim, kamera odağı, 3B, teklif ve PDF için tek ölçü kaynağıdır. Eski v2 JSON'a alan eklenmez; eski kanonik paylaşım kimliği ve klasik düzen korunur. Başlangıç seçimi eski tasarımı açıkça dönüştürür. Yeni koleksiyon/migration gerekmez. Gerçek duvar taşıma kapasitesi, tesisat, suya/neme uygun malzeme, elektrik ve üretim boşlukları ön tasarımdan çıkarılamaz; uygulamadan önce doğrulanmalıdır.
 
 Kontroller: typecheck, lint, entegrasyon testleri, `tests/e2e/bathroom.e2e.spec.ts` ve production build. E2E CMS yazımı yapmaz; kısa bağlantıyı stub eder. `.tools/bathroom-qa/` görseller/PDF Git dışındadır. Hızlı düzenleme/geri al sonrasında teklif geçişini kesebilen gecikmiş hash yazımı `useDesign.flushSave()` ile yönlendirmeden önce tamamlanır.
+
+## Banyo konfigüratörü: yerleşim ve boy dolabı
+
+`/tasarim-olustur?urun=banyo` aynı konfigüratörü banyo başlangıcıyla açar. Header düzeni
+yalnızca konfigüratörün compact header'ına, atölye stilleri `.configurator-shell` kapsamına
+uygulanır. Diğer public sayfaların header yerleşimi ve ana sayfa hero'su değişmez.
+
+### Arayüz dosyaları
+
+- `src/app/(frontend)/styles.css`: açık/koyu tema için semantik `--studio-ui-*` renk,
+  gölge, köşe ve boşluk değişkenleri.
+- `src/app/(frontend)/design-quote.css`: 64 px header, masaüstü/tablet sağ adım rayı,
+  mobil yatay adımlar, yatay özet kartları ve kısa ekran kaydırması.
+- `src/components/site/SiteHeader.tsx`: mobil menüde iletişim ve tema kontrolleri,
+  odak sınırı, Escape ve arka içeriğin inert davranışı.
+- `src/components/configurator/Configurator.tsx`: aynı `go()` fonksiyonuyla doğrudan
+  adım geçişi; araç çubuğu ve alt navigasyon mevcut işlevleriyle korunur.
+- `SummaryDock.tsx` ve `DesignSummary.tsx`: yalnızca üst araç çubuğundaki Özet butonuyla
+  açılan native modal dialog; Escape ile kapanır ve odağı butona döndürür. Her açılışta
+  kapalı başlar; eski session tercihiyle otomatik açılmaz. Altta özet şeridi yoktur ve
+  özet sahne yerleşiminde alan ayırmaz.
+- Malzeme kartı mevcut `go(3)` yoluyla renk paletini açar, paneli palete kaydırır ve
+  seçili renge odaklanır. Mobil sahne araçları native popover içinde erişilebilir kalır.
+- `panels/BathroomSidePanel.tsx`: mevcut NumberField, SelectField, Toggle ve MaterialSwatch
+  bileşenleriyle bağımsız boy dolabı ayarları.
+
+### Veri modeli
+
+Model `src/lib/configurator/bathroomSchema.ts` içindedir. Mevcut
+`bathroom.sideCabinet.width/height/depth/gap` alanları korunur. Yeni alanlar isteğe bağlıdır:
+
+| Alan | Anlamı |
+| --- | --- |
+| `enabled` | Kaldırma/ekleme; kapalıyken ayarlar silinmez. |
+| `side` | `left` / `right`. |
+| `floorGap` | Alt dolaptan bağımsız yerden yükseklik. |
+| `alignment` | `back` / `front`; duvara veya tezgâhın ön kenarına hizalama. |
+| `interior.h/t/shelves/drawers` | Göz yüksekliği, tipi, raf ve çekmece sayısı dizileri. |
+| `finish.malz/yuzey/renk/ral` | Bağımsız kapak malzemesi/yüzeyi/rengi. Yoksa alt dolabı izler. |
+
+`BathroomSelection.row` ayrıca `side` değerini kabul eder. Gözler sahneden, teknik
+çizimden, özetten ve sol panelden seçilir. Göz sayısı 1–6'dır; göz yükseklikleri toplamı
+boy dolabı yüksekliğine eşit olmalıdır. Raf/çekmece boşlukları ayrıca doğrulanır.
+Boy dolabı ölçü sınırları genişlik 30–60, yükseklik 100–180, derinlik 20–40,
+üniteler arası mesafe 10–40 ve yerden yükseklik 0–60 cm'dir.
+
+Eski v2 tasarımlar okunurken yeni alanlar belgeye eklenmez; varsayılanlar yalnızca
+`bathroomSideOptions()` okumasında çözülür. Eski canonical JSON ve paylaşım kimlikleri
+korunur. Palette olmayan renkler, sınır dışı ölçüler ve tutarsız göz dizileri sunucunun
+da kullandığı `configSchema` tarafından reddedilir. CMS şeması değişmediği için migration yoktur.
+
+### İşlemler ve entegrasyon
+
+`src/lib/configurator/bathroom.ts` içinde:
+
+- `bathroomSideOptions()` eski ve yeni kayıtları aynı okuma modeliyle sunar.
+- `setBathroomSideOption()` ekleme/kaldırma, konum, hizalama ve malzemeyi uygular.
+- `setBathroomSideDimension()` bağımsız ölçüleri ve yükseklik değişiminde göz dağılımını günceller.
+- `setBathroomSideCount()`, `setBathroomSideCellHeight()` ve `setBathroomSideCell()` gözleri düzenler.
+- `bathroomGeometry()` toplam yerleşim genişliğini, sol sınırı, kamera merkezini ve göz konumlarını üretir.
+- `bathroomDetails()` PDF ve teklif metinlerine ölçü, konum, göz ve malzeme bilgilerini taşır.
+
+İşlemler mevcut `useDesign.edit()` / config doğrulaması / history yolunu kullanır.
+Yeni kalıcılık anahtarı veya ayrı bir state deposu yoktur. Bağlantı, geri al/yinele,
+teklif doğrulaması ve PDF aynı Config verisini kullanır. `BathroomDrawing.tsx` gözleri
+ve sol/sağ yerleşimi çizer; `scene/BathroomCabinet.tsx` mevcut kapak ve eşya bileşenlerini
+yeniden kullanır. Animasyon yalnızca boy dolabı yerleşim/ölçü değişimine eklenir;
+reduced-motion'da hareket anında uygulanır. Canvas yeniden kurulmaz. Boy dolabı
+geometrisi değişince temas gölgesi yenilenir. Banyo seçim çerçeveleri raycast almaz;
+böylece dekoratif çerçeve başka bir bölmenin tıklamasını engellemez.
+
+### Doğrulama
+
+```sh
+pnpm typecheck
+pnpm lint
+pnpm build
+pnpm exec vitest run tests/int/bathroomSide.int.spec.ts tests/int/bathroom.int.spec.ts tests/int/configurator.int.spec.ts tests/int/designQuote.int.spec.ts tests/int/kitchen.int.spec.ts tests/int/kitchenModules.int.spec.ts tests/int/tv.int.spec.ts tests/int/wardrobe.int.spec.ts tests/int/entryway.int.spec.ts
+pnpm exec playwright test tests/e2e/bathroom.e2e.spec.ts tests/e2e/studio-controls.e2e.spec.ts --workers=1 --reporter=line
+```
+
+Tarayıcı kapsamı: sahneden ve teknik çizimden seçim, ölçü/konum/iç düzen/malzeme,
+geri al/yinele, yeniden yükleme, hash paylaşımı, PDF indirme, teklif sayfası, mobil
+menü ve özet dialog'unun odağı, üç konumlu seçenek paneli ve taşma kontrolü.
+Kısa bağlantı API'si testlerde 503 ile taklit edilerek mevcut hash fallback yolu denenir;
+test CMS kaydı veya gerçek başvuru gönderimi yapılmaz.

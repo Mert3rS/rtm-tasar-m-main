@@ -9,20 +9,17 @@ import {
   useMemo,
   useRef,
   useState,
-  type ComponentRef,
 } from 'react'
 import { Canvas, useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import {
   Environment,
   ContactShadows,
   Lightformer,
-  OrbitControls,
   OrthographicCamera,
   PerspectiveCamera,
 } from '@react-three/drei'
 import {
-  OrthographicCamera as ThreeOrthographicCamera,
-  Vector3,
+  type Group,
   ACESFilmicToneMapping,
   Shape,
   DoubleSide,
@@ -53,7 +50,7 @@ import { layoutProps, shelfCount, type PropPlacement } from '@/lib/configurator/
 import { Html } from '@react-three/drei'
 import { AdaptiveQuality, StudioAtmosphere } from './StudioAtmosphere'
 import { SceneThemeContext, useSceneColors, useSceneTheme } from './SceneTheme'
-import { useReducedMotion } from '../useReducedMotion'
+import { StudioCamera } from './StudioCamera'
 import { useMobileStudio } from '../useMobileStudio'
 
 const RepresentativeProps = lazy(() => import('./RepresentativeProps'))
@@ -69,6 +66,7 @@ export type SceneProps = {
   front: boolean
   zoom: number
   reset: number
+  fit: number
   dimensions: boolean
   onBoundary: (index: number, delta: number) => void
   onError: () => void
@@ -89,128 +87,6 @@ export type SceneProps = {
 const thickness = 0.018
 const humanExtrusion = { depth: 0.025, bevelEnabled: false }
 
-function CameraRig({
-  front,
-  zoom,
-  reset,
-  w,
-  h,
-  centerZ = 0,
-  side = 1,
-  centerX = 0,
-  centerY,
-}: {
-  front: boolean
-  zoom: number
-  reset: number
-  w: number
-  h: number
-  centerZ?: number
-  side?: number
-  centerX?: number
-  centerY?: number
-}) {
-  const ref = useRef<ComponentRef<typeof OrbitControls>>(null)
-  const { get, camera, invalidate, size } = useThree()
-  const reduced = useReducedMotion()
-  const goal = useRef<Vector3 | null>(null)
-  const initialized = useRef(false)
-  const manuallyMoved = useRef(false)
-  const previousReset = useRef(reset)
-  const previousZoom = useRef(zoom)
-  const previousFront = useRef(front)
-  const previousSize = useRef(`${size.width}:${size.height}`)
-  const previousPlan = useRef(`${centerZ}:${side}`)
-  const targetY = centerY ?? h * 0.5
-  useFrame((_, delta) => {
-    const camera = get().camera
-    if (!goal.current || camera.position.distanceTo(goal.current) < 0.002) {
-      if (goal.current) {
-        camera.position.copy(goal.current)
-        goal.current = null
-      }
-      return
-    }
-    camera.position.lerp(goal.current, reduced ? 1 : 1 - Math.exp(-Math.min(delta, 0.05) * 10))
-    camera.lookAt(centerX, targetY, centerZ)
-    ref.current?.update()
-    invalidate()
-  })
-  useEffect(() => {
-    const camera = get().camera
-    const resized = previousSize.current !== `${size.width}:${size.height}`
-    const planChanged = previousPlan.current !== `${centerX}:${targetY}:${centerZ}:${side}`
-    previousPlan.current = `${centerX}:${targetY}:${centerZ}:${side}`
-    const requested = previousReset.current !== reset
-    const adjusted = previousZoom.current !== zoom || previousFront.current !== front
-    previousReset.current = reset
-    previousZoom.current = zoom
-    previousFront.current = front
-    previousSize.current = `${size.width}:${size.height}`
-    if (requested || resized || planChanged) manuallyMoved.current = false
-    if (manuallyMoved.current && !requested && !resized && !adjusted) return
-    const distance =
-      ((Math.max(h, (w * size.height) / Math.max(size.width, 1)) / (2 * Math.tan(Math.PI / 10))) *
-        1.38) /
-      zoom
-    const position = new Vector3(
-      centerX + (front ? 0 : distance * 0.52 * side),
-      targetY + (front ? 0 : distance * 0.15),
-      distance + centerZ,
-    )
-    if (!initialized.current || reduced || front) {
-      camera.position.copy(position)
-      initialized.current = true
-      goal.current = null
-    } else goal.current = position
-    camera.lookAt(centerX, targetY, centerZ)
-    if (camera instanceof ThreeOrthographicCamera) {
-      camera.zoom = Math.min(size.width / (w * 1.3), size.height / (h * 1.38)) * zoom
-      camera.updateProjectionMatrix()
-    }
-    if (ref.current) {
-      ref.current.target.set(centerX, targetY, centerZ)
-      ref.current.update()
-    }
-    invalidate()
-  }, [
-    get,
-    camera,
-    front,
-    zoom,
-    reset,
-    w,
-    h,
-    centerZ,
-    centerX,
-    targetY,
-    side,
-    size.width,
-    size.height,
-    invalidate,
-    reduced,
-  ])
-  return (
-    <OrbitControls
-      ref={ref}
-      onStart={() => {
-        manuallyMoved.current = true
-        goal.current = null
-      }}
-      makeDefault
-      enableDamping={!reduced}
-      dampingFactor={0.12}
-      enableRotate={!front}
-      enablePan={false}
-      minAzimuthAngle={-Math.PI * 0.44}
-      maxAzimuthAngle={Math.PI * 0.44}
-      minPolarAngle={0.3}
-      maxPolarAngle={Math.PI / 2 + 0.04}
-      minDistance={0.8}
-      maxDistance={20}
-    />
-  )
-}
 function Cabinet(props: SceneProps & { lowQuality: boolean; propsReady: boolean }) {
   const colors = useSceneColors()
   const { config: c, selected, cell, onSelect, open } = props
@@ -719,6 +595,7 @@ function SceneContent({
 }: SceneProps & { lowQuality: boolean; onSlow: () => void }) {
   const colors = useSceneColors()
   const { config: c } = props
+  const productRoot = useRef<Group>(null)
   const bathroom = c.bathroom ? bathroomGeometry(c) : undefined
   const kitchenTarget =
     props.kitchenFocus && c.k
@@ -797,40 +674,33 @@ function SceneContent({
         <OrthographicCamera
           makeDefault
           position={[0, 1, 5]}
-          zoom={Math.min(180, (500 / Math.max(c.d.w, c.d.h)) * 100) * props.zoom}
+          zoom={180}
         />
       ) : (
         <PerspectiveCamera makeDefault fov={36} />
       )}
-      <CameraRig
-        centerX={focus?.x ?? (bathroom ? bathroom.centerX / 100 : undefined)}
-        centerY={focus?.y}
+      <StudioCamera
+        product={productRoot}
+        config={c}
         front={props.front}
         zoom={props.zoom}
         reset={props.reset}
-        centerZ={focus?.z ?? (c.k && c.k.layout !== 'straight' ? (c.k.length - c.d.d) / 200 : 0)}
+        fit={props.fit}
+        focus={focus}
+        human={props.human}
+        dimensions={props.dimensions}
         side={c.bathroom ? 0.3 : c.k?.layout === 'right' ? -1 : 1}
-        w={
-          focus?.width ??
-          (bathroom?.totalWidth ?? c.d.w) / 100 +
-            (c.k && c.k.layout !== 'straight' ? c.k.length / 130 : c.d.d / 200) +
-            (props.human ? 1.1 : 0) +
-            (props.dimensions ? 0.3 : 0)
-        }
-        h={
-          focus?.height ??
-          Math.max(
-            (c.tvUnit ? tvGeometry(c).top : c.bathroom ? bathroomGeometry(c).top : c.k ? kitchenHeight(c) : c.d.h) / 100 +
-              (c.m === 'tv' && !c.tvUnit && props.preferences.props
-                ? Math.min(c.o.tv * 0.02214, (c.d.w / 100) * 0.75) * 0.58 + 0.04
-                : 0),
-            props.human ? 1.8 : 0,
-          )
-        }
+        fallback={{
+          x: bathroom ? bathroom.centerX / 100 : 0,
+          z: c.k && c.k.layout !== 'straight' ? (c.k.length - c.d.d) / 200 : 0,
+          w: (bathroom?.totalWidth ?? c.d.w) / 100,
+          h: (c.tvUnit ? tvGeometry(c).top : bathroom ? bathroom.top : c.k ? kitchenHeight(c) : c.d.h) / 100,
+          d: (c.k && c.k.layout !== 'straight' ? c.k.length : c.d.d) / 100,
+        }}
       />
       {c.bathroom ? <BathroomRoom config={c} preferences={props.preferences} lowQuality={lowQuality} /> : <Room depth={c.d.d / 100} preferences={props.preferences} />}
       <ContactShadows
-        key={`${c.m}-${c.d.w}-${c.d.h}-${c.d.d}-${c.o.baza}`}
+        key={`${c.m}-${c.d.w}-${c.d.h}-${c.d.d}-${c.o.baza}-${JSON.stringify(bathroom?.sideCabinet ?? null)}`}
         position={[0, 0.002, 0]}
         opacity={0.25}
         scale={Math.max(5, c.d.w / 60)}
@@ -840,19 +710,21 @@ function SceneContent({
         frames={1}
         color={colors['ink-shadow']}
       />
-      {c.tvUnit ? (
-        <TvCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
-      ) : c.bathroom ? (
-        <BathroomCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
-      ) : c.entryway ? (
-        <EntrywayCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
-      ) : c.wardrobe ? (
-        <WardrobeCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
-      ) : c.k ? (
-        <KitchenCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
-      ) : (
-        <Cabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
-      )}
+      <group ref={productRoot}>
+        {c.tvUnit ? (
+          <TvCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
+        ) : c.bathroom ? (
+          <BathroomCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
+        ) : c.entryway ? (
+          <EntrywayCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
+        ) : c.wardrobe ? (
+          <WardrobeCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
+        ) : c.k ? (
+          <KitchenCabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
+        ) : (
+          <Cabinet {...props} lowQuality={lowQuality} propsReady={propsReady} />
+        )}
+      </group>
       {props.dimensions ? (
         <MeasurementLines
           width={c.d.w / 100}

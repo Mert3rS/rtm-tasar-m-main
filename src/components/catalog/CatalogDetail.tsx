@@ -25,14 +25,25 @@ export function CatalogDetail({
 }) {
   const isModel = item.kind === 'model'
   return (
-    <main id="main-content" className="corporate-detail-page">
+    <main
+      id="main-content"
+      className={`corporate-detail-page${isModel ? ' corporate-detail-page--model' : ''}`}
+      data-rtm-edit={`${isModel ? 'design-models' : 'services'}:${item.id}`}
+      data-rtm-label={`${item.title} · Görseller ve açıklamalar`}
+    >
       <TrackInterest
         k={item.kind}
         s={item.slug}
         l={item.title.slice(0, 80)}
         sig={
           isModel
-            ? item.categories.slice(0, 4).map(({ slug, name }) => ({ t: 'modelCategory' as const, s: slug, l: name.slice(0, 80) }))
+            ? item.categories
+                .slice(0, 4)
+                .map(({ slug, name }) => ({
+                  t: 'modelCategory' as const,
+                  s: slug,
+                  l: name.slice(0, 80),
+                }))
             : []
         }
       />
@@ -71,6 +82,9 @@ export function CatalogDetail({
             height={item.cover.height}
             sizes="(min-width: 1440px) 1328px, 94vw"
             loading="eager"
+            data-rtm-edit={`${isModel ? 'design-models' : 'services'}:${item.id}`}
+            data-rtm-field="coverImage"
+            data-rtm-label={`${item.title} · Kapak görseli`}
           />
         ) : (
           <div className="corporate-cover-empty">
@@ -114,12 +128,16 @@ export function CatalogDetail({
               Ayrıntılı bilgi için projenizi bizimle paylaşabilirsiniz.
             </p>
           )}
-          <Link href="/teklif-al" className="text-link mt-8">
+          <Link href="/iletisim" className="text-link mt-8">
             {isModel ? 'Bu Model İçin Bilgi Alın' : 'Projeniz İçin Teklif Alın'} ↗
           </Link>
         </div>
       </section>
       <ProjectGallery
+        editor={{
+          target: `${isModel ? 'design-models' : 'services'}:${item.id}`,
+          field: 'galleryImages',
+        }}
         images={item.gallery}
         title={item.title}
         eyebrow={isModel ? 'Model detayları' : 'Hizmet görselleri'}

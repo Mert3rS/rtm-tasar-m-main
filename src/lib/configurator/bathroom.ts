@@ -2,6 +2,7 @@ import {
   baseHeight,
   newCell,
   optionName,
+  palette,
   redistribute,
   resize,
   round,
@@ -13,6 +14,9 @@ import {
   bathroomFitError,
   bathroomKindNames,
   defaultBathroom,
+  defaultBathroomSideCabinet,
+  bathroomSideSchema,
+  type BathroomSideCabinet,
   type BathroomOptions,
   type BathroomSelection,
 } from './bathroomSchema'
@@ -30,6 +34,79 @@ export type BathroomUnit = {
   shelves: number
   drawers: number
   glass: BathroomOptions['upper']['glass'][number]
+}
+export function bathroomSideOptions(c: Config) {
+  const raw = c.bathroom?.sideCabinet ?? defaultBathroomSideCabinet()
+  return {
+    ...raw,
+    enabled: raw.enabled ?? Boolean(c.bathroom?.sideCabinet),
+    side: raw.side ?? 'right',
+    floorGap: raw.floorGap ?? (c.o.baza === 'asma' ? (c.bathroom?.floorGap ?? 35) : 0),
+    alignment: raw.alignment ?? 'back',
+    interior: raw.interior ?? { h: [raw.height], t: ['door'], shelves: [3], drawers: [2] },
+  } satisfies BathroomSideCabinet
+}
+function editableSide(c: Config) {
+  if (!c.bathroom) throw new Error('Önce bir banyo başlangıcı seçin.')
+  const side = bathroomSideOptions(c)
+  c.bathroom.sideCabinet = side
+  return side
+}
+function saveSide(c: Config, value: BathroomSideCabinet) {
+  if (c.bathroom) c.bathroom.sideCabinet = bathroomSideSchema.parse(value)
+}
+export function setBathroomSideOption<K extends keyof BathroomSideCabinet>(c: Config, key: K, value: BathroomSideCabinet[K]) {
+  const side = editableSide(c)
+  saveSide(c, { ...side, [key]: value })
+}
+function sideMinimum(kind: BathroomUnit['kind'], drawers: number, shelves: number) {
+  return kind === 'drawers' ? drawers * 12 + 4 : Math.max(18, (shelves + 1) * 8 + 4)
+}
+function fitSideHeights(heights: number[], minimums: number[], total: number) {
+  const remaining = total - sum(minimums)
+  if (remaining < -0.011) throw new Error('Boy dolabı gözleri için yükseklik yetersiz. Göz veya raf sayısını azaltın.')
+  const weights = heights.map((height, i) => Math.max(0, height - minimums[i]))
+  const weight = sum(weights)
+  const result = minimums.map((minimum, i) => round(minimum + Math.max(0, remaining) * (weight ? weights[i] / weight : 1 / heights.length)))
+  result[result.length - 1] = round(total - sum(result.slice(0, -1)))
+  return result
+}
+export function setBathroomSideDimension(c: Config, key: 'width' | 'height' | 'depth' | 'gap' | 'floorGap', value: number) {
+  const side = editableSide(c)
+  if (key === 'height') side.interior.h = fitSideHeights(side.interior.h, side.interior.t.map((kind, i) => sideMinimum(kind, side.interior.drawers[i], side.interior.shelves[i])), value)
+  saveSide(c, { ...side, [key]: value })
+}
+export function setBathroomSideCount(c: Config, count: number) {
+  if (!Number.isInteger(count) || count < 1 || count > 6) throw new Error('Boy dolabında 1–6 göz seçin.')
+  const side = editableSide(c), old = side.interior
+  const t = Array.from({ length: count }, (_, i) => old.t[i] ?? 'door')
+  const shelves = t.map((_, i) => old.shelves[i] ?? 0)
+  const drawers = t.map((_, i) => old.drawers[i] ?? 2)
+  // New eyes have no shelves; existing shelf choices remain intact.
+  const h = fitSideHeights(t.map(() => side.height / count), t.map((kind, i) => sideMinimum(kind, drawers[i], shelves[i])), side.height)
+  saveSide(c, { ...side, interior: { h, t, shelves, drawers } })
+}
+export function setBathroomSideCellHeight(c: Config, index: number, height: number) {
+  const side = editableSide(c), row = side.interior
+  if (index < 0 || index >= row.h.length) throw new Error('Boy dolabı gözü bulunamadı.')
+  const minimums = row.t.map((kind, i) => sideMinimum(kind, row.drawers[i], row.shelves[i]))
+  if (height < minimums[index]) throw new Error('Bu gözde raf veya çekmece için yeterli yükseklik bırakın.')
+  if (row.h.length === 1) {
+    setBathroomSideDimension(c, 'height', height)
+    return
+  }
+  const others = fitSideHeights(row.h.filter((_, i) => i !== index), minimums.filter((_, i) => i !== index), round(side.height - height))
+  let next = 0
+  row.h = row.h.map((_, i) => i === index ? height : others[next++])
+  saveSide(c, side)
+}
+export function setBathroomSideCell(c: Config, index: number, patch: { kind?: 'door' | 'drawers' | 'open'; shelves?: number; drawers?: number }) {
+  const side = editableSide(c), row = side.interior
+  if (index < 0 || index >= row.h.length) throw new Error('Boy dolabı gözü bulunamadı.')
+  if (patch.kind !== undefined) row.t[index] = patch.kind
+  if (patch.shelves !== undefined) row.shelves[index] = patch.shelves
+  if (patch.drawers !== undefined) row.drawers[index] = patch.drawers
+  saveSide(c, side)
 }
 export function bathroomBasinSize(c: Config, unit: BathroomUnit) {
   const rounded = c.bathroom?.basin === 'round'
@@ -81,23 +158,33 @@ export function bathroomGeometry(c: Config) {
       edge += width
     })
   }
-  const sideCabinet: BathroomUnit | undefined = b?.sideCabinet
+  const sideOptions = bathroomSideOptions(c)
+  const sideCabinet: BathroomUnit | undefined = b && sideOptions.enabled
     ? {
-        row: 'upper', index: 0, kind: 'door',
-        x: c.d.w / 2 + b.sideCabinet.gap + b.sideCabinet.width / 2,
-        width: b.sideCabinet.width, height: b.sideCabinet.height,
-        depth: b.sideCabinet.depth, bottom: offset,
-        z: -c.d.d / 2 + b.sideCabinet.depth / 2,
+        row: 'side', index: 0, kind: 'door',
+        x: (sideOptions.side === 'left' ? -1 : 1) * (c.d.w / 2 + sideOptions.gap + sideOptions.width / 2),
+        width: sideOptions.width, height: sideOptions.height,
+        depth: sideOptions.depth, bottom: sideOptions.floorGap,
+        z: (sideOptions.alignment === 'front' ? 1 : -1) * (c.d.d - sideOptions.depth) / 2,
         shelves: 3, drawers: 0, glass: 'fume',
       }
     : undefined
-  const totalWidth = c.d.w + (b?.sideCabinet ? b.sideCabinet.gap + b.sideCabinet.width : 0)
+  let bottom = sideOptions.floorGap
+  const side: BathroomUnit[] = sideCabinet ? sideOptions.interior.h.map((height, index) => {
+    const unit: BathroomUnit = { ...sideCabinet, index, bottom, height, kind: sideOptions.interior.t[index], shelves: sideOptions.interior.shelves[index], drawers: sideOptions.interior.drawers[index] }
+    bottom += height
+    return unit
+  }) : []
+  const extra = sideCabinet ? sideOptions.gap + sideOptions.width : 0
+  const totalWidth = c.d.w + extra
   return {
     lower,
     upper,
+    side,
     sideCabinet,
     totalWidth,
-    centerX: (totalWidth - c.d.w) / 2,
+    centerX: (sideOptions.side === 'left' ? -extra : extra) / 2,
+    left: -c.d.w / 2 - (sideOptions.side === 'left' ? extra : 0),
     offset,
     counter,
     top: Math.max(counter + (b?.gap ?? 0) + (b?.upperHeight ?? 0), sideCabinet ? sideCabinet.bottom + sideCabinet.height : 0),
@@ -110,14 +197,14 @@ export function normalizeBathroomSelection(
   c: Config,
   selection: BathroomSelection,
 ): BathroomSelection {
-  const row = selection.row === 'upper' && c.bathroom?.upperEnabled ? 'upper' : 'lower'
+  const row = selection.row === 'side' && bathroomSideOptions(c).enabled ? 'side' : selection.row === 'upper' && c.bathroom?.upperEnabled ? 'upper' : 'lower'
   return {
     row,
     index: Math.max(
       0,
       Math.min(
         selection.index,
-        (row === 'lower' ? c.r.main.w.length : (c.bathroom?.upper.w.length ?? 1)) - 1,
+        (row === 'side' ? bathroomSideOptions(c).interior.h.length : row === 'lower' ? c.r.main.w.length : (c.bathroom?.upper.w.length ?? 1)) - 1,
       ),
     ),
   }
@@ -135,6 +222,7 @@ export function assertBathroomFits(c: Config) {
   if (error) throw new Error(error)
 }
 export function setBathroomCount(c: Config, row: BathroomSelection['row'], count: number) {
+  if (row === 'side') return setBathroomSideCount(c, count)
   const b = c.bathroom
   if (!b) return
   const source = row === 'lower' ? c.r.main : b.upper
@@ -176,6 +264,7 @@ export function setBathroomCount(c: Config, row: BathroomSelection['row'], count
   assertBathroomFits(c)
 }
 export function setBathroomWidth(c: Config, selection: BathroomSelection, width: number) {
+  if (selection.row === 'side') return setBathroomSideDimension(c, 'width', width)
   if (!c.bathroom) return
   const row = selection.row === 'lower' ? c.r.main : c.bathroom.upper
   if (row.lk[selection.index]) throw new Error('Önce bölme kilidini açın.')
@@ -205,6 +294,10 @@ export function setBathroomKind(
 ) {
   const b = c.bathroom
   if (!b) return
+  if (selection.row === 'side') {
+    if (kind === 'door' || kind === 'drawers' || kind === 'open') setBathroomSideCell(c, selection.index, { kind })
+    return
+  }
   if (selection.row === 'lower') {
     if (!['sink', 'drawers', 'door', 'open', 'washer'].includes(kind)) return
     if (
@@ -296,7 +389,11 @@ export function bathroomDetails(c: Config): [string, string][] {
           ],
         ] satisfies [string, string][])
       : []),
-    ...(b.sideCabinet ? ([['Boy dolabı', `${b.sideCabinet.width} × ${b.sideCabinet.height} × ${b.sideCabinet.depth} cm · Sağda / ${b.sideCabinet.gap} cm ara · 3 raf · Toplam yerleşim genişliği ${g.totalWidth} cm`]] satisfies [string, string][]) : []),
+    ...(g.sideCabinet ? ([
+      ['Boy dolabı', `${g.sideCabinet.width} × ${g.sideCabinet.height} × ${g.sideCabinet.depth} cm · ${bathroomSideOptions(c).side === 'left' ? 'Solda' : 'Sağda'} / ${b.sideCabinet?.gap} cm ara · Yerden ${g.sideCabinet.bottom} cm · ${bathroomSideOptions(c).alignment === 'front' ? 'Tezgâhın ön kenarına hizalı' : 'Duvara hizalı'} · Toplam yerleşim genişliği ${g.totalWidth} cm`],
+      ['Boy dolabı gözleri', g.side.map((unit) => `${unit.index + 1}) ${unit.height} cm ${bathroomKindNames[unit.kind]} / ${unit.kind === 'drawers' ? `${unit.drawers} çekmece` : `${unit.shelves} raf`}`).join(' · ')],
+      ['Boy dolabı malzemesi', `${b.sideCabinet?.finish?.malz ?? c.o.malz} · ${b.sideCabinet?.finish?.yuzey ?? c.o.yuzey} · ${palette[b.sideCabinet?.finish?.renk ?? c.o.renk].name}${b.sideCabinet?.finish?.ral ? ` / ${b.sideCabinet.finish.ral}` : ''}`],
+    ] satisfies [string, string][]) : []),
     [
       'Banyo detayları',
       `${b.mirrorLed ? 'Ayna çevresi LED' : 'Ayna LED yok'} · ${b.splashback ? 'Tezgâh arkası panel' : 'Arka panel yok'} · ${b.towelRail ? 'Havluluk' : 'Havluluk yok'}`,

@@ -9,6 +9,7 @@ import type {
   DashboardProject,
 } from '@/components/dashboard-01/dashboard-types'
 import type { City } from '@/payload-types'
+import { AdminContentOverview } from './AdminContentOverview'
 
 type ProjectDoc = {
   _status?: 'draft' | 'published' | null
@@ -199,6 +200,7 @@ export async function AdminDashboard({ payload, user }: ServerProps) {
     <DashboardView
       accountHref={href(payload.config.admin.routes.account as `/${string}`)}
       data={data}
+      content={<AdminContentOverview payload={payload} user={user} />}
       siteHref="/"
     />
   )

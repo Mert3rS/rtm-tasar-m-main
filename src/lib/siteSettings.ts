@@ -3,6 +3,9 @@ import { cache } from 'react'
 import { getPublicPayload, projectImage } from './projectData'
 import { phoneHref, safeHttpsUrl, validEmail, whatsappUrl } from './contactValidation'
 import { policyVersionPattern, UNCONFIGURED_POLICY } from './consent/cookie'
+import { resolveHomepageCopy } from './homepageContent'
+import { HERO_POSITIONS, type HeroPositionKey, type HeroImage } from './homepageHero'
+import { resolveSiteCopy } from './siteCopy'
 
 // Global REST access is admin-only. This intentional trusted read selects approved public fields only.
 export const getPublicSiteSettings = cache(async () => {
@@ -12,6 +15,9 @@ export const getPublicSiteSettings = cache(async () => {
     overrideAccess: true,
     depth: 1,
     select: {
+      homepage: true,
+      siteCopy: true,
+      heroImages: true,
       companyName: true,
       companyDescription: true,
       logo: true,
@@ -41,6 +47,8 @@ export const getPublicSiteSettings = cache(async () => {
     },
   })
   const cookiePolicyUrl = safeHttpsUrl(doc.cookiePolicyUrl)
+  const heroImages: Partial<Record<HeroPositionKey, HeroImage | undefined>> = {}
+  for (const { key } of HERO_POSITIONS) heroImages[key] = projectImage(doc.heroImages?.[key])
   const cookiePolicyContent = doc.cookiePolicyContent?.root?.children?.length
     ? doc.cookiePolicyContent
     : undefined
@@ -52,6 +60,9 @@ export const getPublicSiteSettings = cache(async () => {
       : undefined
   const cookiePolicyReady = Boolean((cookiePolicyContent || cookiePolicyUrl) && policyVersion)
   return {
+    homepage: resolveHomepageCopy(doc.homepage),
+    siteCopy: resolveSiteCopy(doc.siteCopy),
+    heroImages,
     companyName: doc.companyName || 'RTM Tasarım',
     companyDescription: doc.companyDescription || undefined,
     logo: projectImage(doc.logo),

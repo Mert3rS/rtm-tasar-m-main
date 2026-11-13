@@ -12,9 +12,9 @@ const AssistantPanel = dynamic(loadPanel, { ssr: false })
 
 /** Necessary, tab-scoped flag: the intro animation and phone greeting play once per tab. */
 const INTRO_KEY = 'rtm-assistant-intro-v1'
-const INTRO_DELAY = 2000
 const INTRO_PLAY = 1400
 const HINT_MS = 6000
+const SHOW_AFTER_SCROLL = 180
 const COMPACT_AFTER = 240
 export const DEFAULT_LAUNCHER_SUBTITLE = 'Sorularınızı yanıtlayalım'
 
@@ -41,27 +41,41 @@ export function AssistantLauncher({ settings }: { settings: AssistantPublicSetti
   useEffect(() => {
     if (hiddenOnRoute) return
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    // Read the tab flag once per mount (effects may run twice in development).
     if (introSeen.current === null) {
       introSeen.current = safeStorage.get(INTRO_KEY, 'session') === '1'
-      if (!introSeen.current) safeStorage.set(INTRO_KEY, '1', 'necessary', 'session')
     }
     const seen = introSeen.current
     const phone = window.matchMedia('(max-width: 768px)').matches
-    // Seen in this tab: appear at once. Reduced motion: no delay and no motion, but the phone
-    // greeting still appears once. Otherwise: appear after ~2 s with one quiet ring.
-    const delay = seen || reduced ? 0 : INTRO_DELAY
-    const timers = [
-      window.setTimeout(() => {
-        setIntro(seen || reduced ? 'shown' : 'entering')
-        if (!seen && phone) setHint(true)
-      }, delay),
-    ]
-    if (!seen) {
-      if (!reduced) timers.push(window.setTimeout(() => setIntro('shown'), delay + INTRO_PLAY))
-      timers.push(window.setTimeout(() => setHint(false), delay + HINT_MS))
+    const timers: number[] = []
+    let frame = 0
+    let revealed = false
+
+    const reveal = () => {
+      if (revealed || window.scrollY < SHOW_AFTER_SCROLL) return
+      revealed = true
+      window.removeEventListener('scroll', onScroll)
+      if (!seen) safeStorage.set(INTRO_KEY, '1', 'necessary', 'session')
+      setIntro(seen || reduced ? 'shown' : 'entering')
+      if (!seen && phone) setHint(true)
+      if (!seen && !reduced) timers.push(window.setTimeout(() => setIntro('shown'), INTRO_PLAY))
+      if (!seen) timers.push(window.setTimeout(() => setHint(false), HINT_MS))
     }
-    return () => timers.forEach((id) => window.clearTimeout(id))
+
+    const onScroll = () => {
+      if (frame) return
+      frame = window.requestAnimationFrame(() => {
+        frame = 0
+        reveal()
+      })
+    }
+
+    reveal()
+    if (!revealed) window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      if (frame) window.cancelAnimationFrame(frame)
+      timers.forEach((id) => window.clearTimeout(id))
+    }
   }, [hiddenOnRoute])
 
   // Desktop: collapse to the icon box while scrolling down, expand again when scrolling up.

@@ -11,18 +11,21 @@ import { ArchiveInterestChip } from '@/components/personalization/ArchiveInteres
 import { TrackInterest } from '@/components/personalization/TrackInterest'
 import { ArchiveMotion } from '@/components/site/ArchiveMotion'
 import { ModelFilters } from '@/components/catalog/ModelFilters'
+import { getPublicSiteSettings } from '@/lib/siteSettings'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 export async function generateMetadata({ searchParams }: Props) {
   const query = await searchParams
+  const settings = await getPublicSiteSettings()
   return portfolioMetadata({
-    title: 'Modellerimiz | RTM Tasarım',
-    description: 'Farklı ihtiyaçlara ve yaşam alanlarına özel tasarım seçeneklerini keşfedin.',
+    title: `${settings.siteCopy.modelsTitle} | ${settings.companyName}`,
+    description: settings.siteCopy.modelsDescription,
     path: '/modeller',
     noindex: Object.values(query).some((value) => value !== undefined && value !== ''),
   })
 }
 export default async function ModelsPage({ searchParams }: Props) {
+  const settings = await getPublicSiteSettings()
   const filters = parseModelQuery(await searchParams)
   const result = await getModelsPage(filters)
   if (filters.page > Math.max(result.totalPages, 1))
@@ -36,13 +39,13 @@ export default async function ModelsPage({ searchParams }: Props) {
     >
       <PageIntro
         number="02"
-        eyebrow="TASARIM KOLEKSİYONU"
+        eyebrow={settings.siteCopy.modelsEyebrow}
         title={
           <>
-            Modellerimiz<span className="accent">.</span>
+            {settings.siteCopy.modelsTitle}<span className="accent">.</span>
           </>
         }
-        description="Farklı ihtiyaçlara ve yaşam alanlarına özel tasarım seçeneklerini keşfedin."
+        description={settings.siteCopy.modelsDescription}
       />
       {activeCategory ? (
         <TrackInterest

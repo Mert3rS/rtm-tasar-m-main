@@ -171,6 +171,7 @@ function Unit({
                     }
                     color={doorColor}
                     options={options}
+                    handleEdge={upper ? 'bottom' : 'top'}
                     open={props.open}
                     selected={selected}
                     localOpen={localOpen}

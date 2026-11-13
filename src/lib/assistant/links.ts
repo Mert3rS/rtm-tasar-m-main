@@ -11,11 +11,9 @@ export const internalRoutePatterns: RegExp[] = [
   new RegExp(`^/hizmetler(?:/${slug})?$`),
   new RegExp(`^/modeller(?:/${slug})?$`),
   new RegExp(`^/showroom(?:/${slug})?$`),
-  /^\/teklif-al$/,
   /^\/iletisim$/,
   /^\/tasarim-olustur$/,
   /^\/hakkimizda$/,
-  /^\/sss$/,
   /^\/cerez-politikasi$/,
 ]
 const queryKeys = new Set(['kategori', 'ulke', 'sehir', 'sayfa', 'urun'])

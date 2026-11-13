@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  baseHeight,
   frontNames,
   interiorNames,
   optionName,
@@ -10,7 +9,6 @@ import {
   round,
   type Config,
 } from '@/lib/configurator/config'
-import { MaterialSwatch } from './MaterialSwatch'
 import { kitchenDescription, kitchenGeometry } from '@/lib/configurator/kitchen'
 import { kitchenKindNames, kitchenRowNames, type KitchenSelection } from '@/lib/configurator/kitchenSchema'
 import { tvDetails, tvGeometry } from '@/lib/configurator/tv'
@@ -24,14 +22,14 @@ import { wardrobeDoorNames, wardrobeLayoutNames } from '@/lib/configurator/wardr
 
 function TvSummary({ config: c, selection, onSelect }: { config: Config; selection?: TvSelection; onSelect?: (selection: TvSelection) => void }) {
   const g = tvGeometry(c)
-  return <>{(['lower', 'upper'] as const).map((row) => <div className="dc-summary-section" key={row}><h3>{row === 'lower' ? 'Alt TV ünitesi' : 'Üst TV bölümleri'}</h3>{g[row].map((unit) => <button type="button" key={unit.index} aria-pressed={selection?.row === row && selection.index === unit.index} onClick={() => onSelect?.({ row, index: unit.index })}><span>{unit.index + 1}. bölme<small>{tvKindNames[unit.kind]}</small></span><span>{unit.width} cm</span></button>)}</div>)}</>
+  return <>{(['lower', 'upper'] as const).map((row) => <div className="dc-summary-section" key={row}><h3>{row === 'lower' ? 'Alt TV ünitesi' : 'Üst TV bölümleri'}</h3><p className="dc-summary-help">{g[row].length} bölme · Düzenlemek istediğiniz bölmeyi seçin.</p>{g[row].map((unit) => <button type="button" key={unit.index} aria-pressed={selection?.row === row && selection.index === unit.index} onClick={() => onSelect?.({ row, index: unit.index })}><span>{unit.index + 1}. bölme<small>{tvKindNames[unit.kind]}</small><small>Gövde yüksekliği {round(unit.height)} cm · Derinlik {unit.depth} cm{unit.kind === 'drawers' ? ` · ${unit.drawers} çekmece` : unit.kind === 'door' || unit.kind === 'glass' || unit.kind === 'open' ? ` · ${unit.shelves} raf` : ''}</small></span><span><strong>{unit.width} cm</strong><small>Genişlik</small></span></button>)}</div>)}</>
 }
 
 function BathroomSummary({ config: c, selection, onSelect }: { config: Config; selection?: BathroomSelection; onSelect?: (selection: BathroomSelection) => void }) {
   const g = bathroomGeometry(c)
   return <>
     {(['lower', ...(c.bathroom?.upperEnabled ? ['upper' as const] : [])] satisfies BathroomSelection['row'][]).map((row) => <div className="dc-summary-section" key={row}><h3>{row === 'lower' ? 'Alt banyo dolapları' : 'Üst banyo dolapları'}</h3>{g[row].map((unit) => <button type="button" key={unit.index} aria-pressed={selection?.row === row && selection.index === unit.index} onClick={() => onSelect?.({ row, index: unit.index })}><span>{unit.index + 1}. bölme<small>{bathroomKindNames[unit.kind]}</small></span><span>{unit.width} cm</span></button>)}</div>)}
-    {g.sideCabinet ? <div className="dc-summary-section"><h3>Sağ boy dolabı</h3><p>{g.sideCabinet.width} × {g.sideCabinet.height} × {g.sideCabinet.depth} cm</p><small>Toplam yerleşim {g.totalWidth} cm</small></div> : null}
+    {g.sideCabinet ? <div className="dc-summary-section"><h3>{c.bathroom?.sideCabinet?.side === 'left' ? 'Sol boy dolabı' : 'Sağ boy dolabı'}</h3><p>{g.sideCabinet.width} × {g.sideCabinet.height} × {g.sideCabinet.depth} cm</p><small>Yerden {g.sideCabinet.bottom} cm · Toplam yerleşim {g.totalWidth} cm</small>{g.side.map((unit) => <button type="button" key={unit.index} aria-pressed={selection?.row === 'side' && selection.index === unit.index} onClick={() => onSelect?.({ row: 'side', index: unit.index })}><span>{unit.index + 1}. göz<small>{bathroomKindNames[unit.kind]}</small></span><span>{unit.height} cm</span></button>)}{c.bathroom?.sideCabinet?.finish ? <small>{c.bathroom.sideCabinet.finish.malz} · {c.bathroom.sideCabinet.finish.yuzey} · {palette[c.bathroom.sideCabinet.finish.renk].name}</small> : null}</div> : null}
   </>
 }
 
@@ -81,15 +79,13 @@ export function DesignSummary({
   kitchenSelection?: KitchenSelection
   onKitchenSelect?: (selection: KitchenSelection) => void
 }) {
+  const plan = c.k ? kitchenDescription(c) : c.tvUnit ? tvDetails(c)[0]?.[1] : c.bathroom ? bathroomDetails(c)[0]?.[1] : c.entryway ? entrywayDetails(c)[0]?.[1] : c.wardrobe ? wardrobeDetails(c)[0]?.[1] : undefined
   return (
     <div className="dc-design-summary">
+      <div className="dc-summary-overview">
       <p className="dc-eyebrow">SİZE AİT BİR TASARIM</p>
       <h2>{productNames[c.m]}</h2>
-      {c.k ? <p className="dc-hint">{kitchenDescription(c)}</p> : null}
-      {c.tvUnit ? <p className="dc-hint">{tvDetails(c)[0]?.[1]}</p> : null}
-      {c.bathroom ? <p className="dc-hint">{bathroomDetails(c)[0]?.[1]}</p> : null}
-      {c.entryway ? <p className="dc-hint">{entrywayDetails(c)[0]?.[1]}</p> : null}
-      {c.wardrobe ? <p className="dc-hint">{wardrobeDetails(c)[0]?.[1]}</p> : null}
+      {plan ? <ul className="dc-summary-facts">{plan.split(' · ').map((fact, index) => <li key={index}>{fact}</li>)}</ul> : null}
       <button
         className="dc-summary-size"
         onClick={() => onStep(0)}
@@ -97,9 +93,17 @@ export function DesignSummary({
       >
         <strong>
           {c.d.w} × {c.d.h} × {c.d.d}
+          <small> cm</small>
         </strong>
-        <span>Genişlik × yükseklik × derinlik · cm</span>
+        <span className="dc-summary-measures">
+          <span><small>Genişlik</small><b>{c.d.w} cm</b></span>
+          <span><small>{c.tvUnit || c.bathroom || c.k ? 'Alt dolap yüksekliği' : 'Yükseklik'}</small><b>{c.d.h} cm</b></span>
+          <span><small>Derinlik</small><b>{c.d.d} cm</b></span>
+        </span>
+        <span>Ölçüleri düzenle →</span>
       </button>
+      </div>
+      <div className="dc-summary-cards">
       {c.tvUnit ? <TvSummary config={c} selection={tvSelection} onSelect={onTvSelect} /> : c.bathroom ? <BathroomSummary config={c} selection={bathroomSelection} onSelect={onBathroomSelect} /> : c.entryway ? <EntrywaySummary config={c} selected={selected} onSelect={onSelect} /> : c.wardrobe ? <WardrobeSummary config={c} selected={selected} onSelect={onSelect} /> : c.k?.modules ? <KitchenSummary config={c} selection={kitchenSelection} onSelect={onKitchenSelect} /> : <><h3>Bölmeler ve gözler</h3>
       <p className="dc-hint">Bir gözü seçerek sahnede inceleyin.</p>
       {c.r.main.g.map((g, s) => (
@@ -130,33 +134,7 @@ export function DesignSummary({
           ))}
         </div>
       ))}</>}
-      <h3>Malzeme ve detaylar</h3>
-      <button className="dc-summary-material" onClick={() => onStep(3)}>
-        <MaterialSwatch color={c.o.renk} glossy={c.o.yuzey === 'Parlak'} />
-        <span>
-          {c.o.malz}
-          <small>
-            {c.o.yuzey} · {palette[c.o.renk].name}
-            {c.o.ral ? ` · ${c.o.ral}` : ''}
-          </small>
-        </span>
-      </button>
-      {c.o.iki ? (
-        <div className="dc-summary-material">
-          <MaterialSwatch color={c.o.renk2} />
-          <span>
-            İkinci renk<small>{palette[c.o.renk2].name}</small>
-          </span>
-        </div>
-      ) : null}
-      <button className="dc-summary-detail" onClick={() => onStep(4)}>
-        {optionName(c.o.kulp)} · {optionName(c.o.krenk)}
-        <small>
-          {baseHeight(c)} cm baza · {optionName(c.o.acilim)}
-          <br />
-          LED: {c.o.led.map(optionName).join(', ') || 'Yok'}
-        </small>
-      </button>
+      </div>
       <p className="dc-neutral-note">
         Bu araç üretim/CNC çizimi değildir. Ölçü ve donanım uygunluğu üretim öncesinde
         doğrulanmalıdır.

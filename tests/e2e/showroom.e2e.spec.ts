@@ -323,7 +323,7 @@ test('CMS panorama validation, immersive viewer, public access and project links
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('DEMO Gezilebilir Showroom')
     await expect(page.getByRole('link', { name: 'Bu Tasarım İçin Bilgi Alın' })).toHaveAttribute(
       'href',
-      '/teklif-al',
+      '/iletisim',
     )
     await expect(page.getByRole('button', { name: 'Yakınlaştır', exact: true })).toBeEnabled({
       timeout: 30_000,
@@ -488,7 +488,7 @@ test('CMS panorama validation, immersive viewer, public access and project links
     await page.goto(`http://localhost:3000/projeler/${prefix}-project`)
     await expect(
       page.getByRole('link', { name: 'Benzer Bir Proje İçin Teklif Alın' }),
-    ).toHaveAttribute('href', '/teklif-al')
+    ).toHaveAttribute('href', '/iletisim')
     await page.getByRole('link', { name: 'Projeyi 360° Keşfedin' }).click()
     await expect(page).toHaveURL(new RegExp(`/showroom/${prefix}-showroom-0$`))
     await page.getByRole('link', { name: 'Portföy projesini inceleyin' }).click()

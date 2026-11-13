@@ -12,21 +12,23 @@ import { parsePortfolioQuery, portfolioHref } from '@/lib/portfolioQuery'
 import { portfolioMetadata } from '@/lib/seo'
 import type { PortfolioQuery } from '@/types/portfolio'
 import { ArchiveMotion } from '@/components/site/ArchiveMotion'
+import { getPublicSiteSettings } from '@/lib/siteSettings'
 
 type Props = { searchParams: Promise<PortfolioQuery> }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const query = await searchParams
+  const settings = await getPublicSiteSettings()
   return portfolioMetadata({
-    title: 'Projelerimiz | RTM Tasarım',
-    description:
-      'RTM Tasarım iç mimari, mobilya ve uygulama projeleri. Projelerimizi kategori, ülke ve şehre göre keşfedin.',
+    title: `${settings.siteCopy.projectsTitle} | ${settings.companyName}`,
+    description: settings.siteCopy.projectsDescription,
     path: '/projeler',
     noindex: Object.values(query).some((value) => value !== undefined && value !== ''),
   })
 }
 
 export default async function PortfolioPage({ searchParams }: Props) {
+  const settings = await getPublicSiteSettings()
   const filters = parsePortfolioQuery(await searchParams)
   const result = await getPortfolioPage(filters)
   if (filters.page > Math.max(result.totalPages, 1))
@@ -48,13 +50,13 @@ export default async function PortfolioPage({ searchParams }: Props) {
     >
       <PageIntro
         number="01"
-        eyebrow="PROJE ARŞİVİ"
+        eyebrow={settings.siteCopy.projectsEyebrow}
         title={
           <>
-            Projelerimiz<span className="accent">.</span>
+            {settings.siteCopy.projectsTitle}<span className="accent">.</span>
           </>
         }
-        description="Her projede estetik, işlevsellik ve ustalığı bir araya getiriyoruz."
+        description={settings.siteCopy.projectsDescription}
       />
       {filterSignals.length ? (
         <TrackInterest

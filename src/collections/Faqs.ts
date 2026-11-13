@@ -10,7 +10,7 @@ export const Faqs: CollectionConfig = {
     group: 'Asistan',
     defaultColumns: ['question', 'category', 'displayOrder', 'active', '_status'],
     description:
-      'Onaylı soru/cevaplar. Asistan bunları arar; /sss sayfasında yayınlanır. Otomatik içerik eklenmez.',
+      'Onaylı soru/cevaplar. Yalnızca asistan yanıtlarında kullanılır; ayrı bir public sayfada yayınlanmaz. Otomatik içerik eklenmez.',
   },
   access: {
     create: isAuthenticated,

@@ -3,9 +3,17 @@
 import { usePathname } from 'next/navigation'
 import { HomeMotion } from '@/components/home/HomeMotion'
 import { SiteHeader } from './SiteHeader'
+import type { ProjectImage } from '@/types/portfolio'
+import type { SiteCopy } from '@/lib/siteCopy'
 
 /** Keep one persistent header outside route content and its loading/error boundaries. */
-export function PublicDesign({ children }: { children: React.ReactNode }) {
+export function PublicDesign({
+  brand,
+  children,
+}: {
+  brand: { companyName: string; logo?: ProjectImage; siteCopy: SiteCopy }
+  children: React.ReactNode
+}) {
   const pathname = usePathname()
   const configurator = pathname === '/tasarim-olustur'
   return (
@@ -16,7 +24,7 @@ export function PublicDesign({ children }: { children: React.ReactNode }) {
             İçeriğe geç
           </a>
         ) : null}
-        <SiteHeader />
+        <SiteHeader brand={brand} />
       </div>
       {configurator ? (
         <div className="configurator-shell">{children}</div>

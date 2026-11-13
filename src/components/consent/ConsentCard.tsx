@@ -139,11 +139,11 @@ export function ConsentCard({
 
   const title = policy.ready
     ? policy.bannerTitle || 'Deneyiminizi size göre şekillendirelim'
-    : 'Çerez bilgilendirmesi'
+    : 'Çerez bilgisi'
   const description = policy.ready
     ? policy.bannerDescription ||
       'Zorunlu çerezler sitenin güvenli çalışması için her zaman açıktır. İzin verirseniz baktığınız içeriğe göre öneriler sunarız; tercihlerinizi istediğiniz zaman değiştirebilirsiniz.'
-    : 'Bu sitede yalnızca güvenlik ve temel çalışma için zorunlu çerezler kullanılır. Onaylı çerez politikası yayınlanana kadar isteğe bağlı çerezler ve kalıcı tercih kayıtları kapalıdır.'
+    : 'Bu sitede yalnızca güvenlik ve temel çalışma için zorunlu çerezler kullanılır.'
 
   return (
     <section
@@ -151,6 +151,7 @@ export function ConsentCard({
       className="consent-card"
       data-view={view}
       data-state={leaving ? 'leaving' : 'open'}
+      data-policy-ready={policy.ready ? 'true' : 'false'}
       role="dialog"
       aria-modal={modal ? 'true' : 'false'}
       aria-labelledby={titleId}
@@ -197,15 +198,17 @@ export function ConsentCard({
               </button>
             </div>
           )}
-          <button
-            type="button"
-            className="consent-manage"
-            onPointerEnter={() => void loadPreferences()}
-            onFocus={() => void loadPreferences()}
-            onClick={() => onViewChange('preferences')}
-          >
-            Tercihleri yönet <span aria-hidden="true">→</span>
-          </button>
+          {policy.ready ? (
+            <button
+              type="button"
+              className="consent-manage"
+              onPointerEnter={() => void loadPreferences()}
+              onFocus={() => void loadPreferences()}
+              onClick={() => onViewChange('preferences')}
+            >
+              Tercihleri yönet <span aria-hidden="true">→</span>
+            </button>
+          ) : null}
         </div>
       ) : (
         <ConsentPreferences

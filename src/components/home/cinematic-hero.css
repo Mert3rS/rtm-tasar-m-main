@@ -1,0 +1,564 @@
+/* Scoped to the opening film; shared sections and Payload retain their themes. */
+html:has(.cinematic-hero) {
+  scroll-behavior: auto;
+}
+.public-site:has(.cinematic-hero) {
+  overflow: clip visible;
+}
+.public-site:has(.cinematic-hero) .home-experience {
+  padding-top: 0;
+}
+.cinematic-hero {
+  position: relative;
+  height: 100svh;
+  background: var(--hero-paper);
+  color: var(--hero-ink);
+  --hero-progress: 0;
+  --hero-intro: 1;
+  --hero-ending: 0;
+}
+.cinematic-hero[data-enhanced='true'] {
+  height: var(--hero-scroll-height, 500svh);
+}
+.cinematic-stage {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+.cinematic-media,
+.cinematic-poster,
+.cinematic-canvas,
+.cinematic-scrim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.cinematic-media {
+  background: radial-gradient(ellipse at 75% 35%, var(--hero-brass), var(--hero-paper) 75%);
+}
+.cinematic-media img {
+  object-fit: cover;
+}
+.cinematic-canvas {
+  opacity: 0;
+}
+.cinematic-native-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  contain: layout paint;
+}
+.cinematic-native-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+[data-canvas-ready='true'] .cinematic-canvas {
+  opacity: 1;
+}
+.cinematic-scrim {
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hero-paper) 95%, transparent),
+    transparent 24%,
+    transparent 74%,
+    color-mix(in srgb, var(--hero-paper) 92%, transparent)
+  );
+}
+.cinematic-scrim::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--hero-paper) 96%, transparent),
+    color-mix(in srgb, var(--hero-paper) 84%, transparent) 27%,
+    color-mix(in srgb, var(--hero-paper) 15%, transparent) 65%,
+    transparent
+  );
+  opacity: var(--hero-intro);
+}
+.cinematic-scrim::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--hero-paper) var(--hero-finale-opacity), transparent);
+  opacity: var(--hero-ending);
+}
+.cinematic-topline {
+  position: absolute;
+  inset: calc(var(--site-header-height) + 28px) 4.2vw auto;
+  display: flex;
+  justify-content: space-between;
+  color: var(--hero-ink);
+  font:
+    10px var(--font-workshop-mono),
+    monospace;
+  letter-spacing: 0.15em;
+}
+.cinematic-topline span:first-child {
+  visibility: hidden;
+}
+.cinematic-intro {
+  position: absolute;
+  left: 7.4%;
+  bottom: 21%;
+  width: min(620px, 48%);
+}
+.cinematic-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 26px;
+  font:
+    10px var(--font-workshop-mono),
+    monospace;
+  letter-spacing: 0.13em;
+  line-height: 1.6;
+}
+.cinematic-eyebrow > span {
+  width: 28px;
+  height: 1px;
+  background: var(--hero-brass);
+}
+.public-site .cinematic-hero h1 {
+  margin: 0;
+  font:
+    400 clamp(48px, 6.1vw, 100px)/0.98 var(--font-studio-serif),
+    Georgia,
+    serif;
+  letter-spacing: -0.045em;
+  text-wrap: balance;
+}
+.public-site .cinematic-hero :is(h1, h2) em {
+  color: var(--hero-emphasis);
+  font-family: var(--font-studio-serif), Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+}
+.cinematic-description {
+  max-width: 370px;
+  margin: 25px 0 30px;
+  color: var(--hero-muted);
+  font-size: 13px;
+  line-height: 1.85;
+}
+.cinematic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 25px;
+}
+.public-site .cinematic-hero .cinematic-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--contact-button-gap);
+  min-height: var(--contact-button-height);
+  padding: var(--contact-button-padding-block) var(--contact-button-padding-inline);
+  background: var(--button);
+  color: var(--hero-button-text);
+  border: 0;
+  border-radius: 4px;
+  font-size: var(--contact-button-font-size);
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+  transition:
+    background 0.25s,
+    box-shadow 0.25s;
+}
+.cinematic-button:hover {
+  background: var(--button);
+  color: var(--hero-button-text);
+  box-shadow: none;
+}
+.cinematic-button > span {
+  font-size: inherit;
+  line-height: inherit;
+}
+.cinematic-text-link > span {
+  font-size: 18px;
+}
+.cinematic-text-link {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 18px;
+  color: var(--hero-ink);
+  font-size: 12px;
+  border-bottom: 1px solid var(--hero-line);
+}
+.cinematic-text-link:hover {
+  border-bottom-color: var(--hero-accent);
+}
+.cinematic-hero a:focus-visible {
+  outline: 2px solid var(--hero-accent);
+  outline-offset: 6px;
+}
+.cinematic-chapters {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.cinematic-chapters::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--hero-paper) 76%, transparent),
+    transparent 58%
+  );
+  opacity: var(--hero-story, 0);
+}
+.cinematic-chapter {
+  position: absolute;
+  left: 7.4%;
+  bottom: 24%;
+  opacity: 0;
+  color: var(--hero-ink);
+  text-shadow: 0 2px 20px var(--hero-paper);
+}
+.cinematic-chapter-number {
+  font:
+    11px var(--font-workshop-mono),
+    monospace;
+  letter-spacing: 0.12em;
+}
+.cinematic-chapter p {
+  margin: 18px 0 12px;
+  font:
+    400 clamp(64px, 8vw, 140px)/1 var(--font-studio-serif),
+    Georgia,
+    serif;
+  letter-spacing: -0.035em;
+}
+.cinematic-chapter-note {
+  color: var(--hero-muted);
+  font-size: 13px;
+  letter-spacing: 0.02em;
+}
+.cinematic-finale {
+  display: none;
+  position: absolute;
+  inset: 0;
+  padding: 100px 24px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  text-align: center;
+}
+[data-enhanced='true'] .cinematic-finale {
+  display: flex;
+  opacity: 0;
+}
+.public-site .cinematic-finale h2 {
+  margin: 0 0 32px;
+  font:
+    400 clamp(42px, 5.7vw, 88px)/1.02 var(--font-studio-serif),
+    Georgia,
+    serif;
+  letter-spacing: -0.04em;
+}
+.cinematic-bottom {
+  position: absolute;
+  inset: auto 4.2vw 34px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: end;
+  gap: 24px;
+}
+.cinematic-scroll-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 16px;
+  justify-self: start;
+  color: var(--hero-ink);
+  font:
+    9px var(--font-workshop-mono),
+    monospace;
+  letter-spacing: 0.1em;
+  transition: opacity 0.3s;
+}
+[data-started='true'] .cinematic-scroll-cue {
+  opacity: 0;
+  visibility: hidden;
+}
+.cinematic-scroll-arrow {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 48px;
+  border: 1px solid var(--hero-line);
+  border-radius: 20px;
+  font-size: 22px;
+  animation: cinematic-scroll 2s ease-in-out infinite;
+}
+.cinematic-chapter-marks {
+  display: flex;
+  gap: 32px;
+  color: var(--hero-ink);
+}
+.cinematic-chapter-mark {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-top: 15px;
+  border-top: 1px solid var(--hero-line);
+  opacity: 0.5;
+  font-size: 11px;
+  transition:
+    opacity 0.3s,
+    border-color 0.3s;
+}
+.cinematic-chapter-mark b {
+  font:
+    9px var(--font-workshop-mono),
+    monospace;
+}
+.cinematic-chapter-mark[data-active='true'] {
+  border-top-color: var(--hero-accent);
+  opacity: 1;
+}
+.cinematic-credit {
+  justify-self: end;
+  margin-inline-end: 64px;
+  min-height: 44px;
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  text-align: right;
+  color: var(--hero-ink);
+  font-size: 10px;
+  line-height: 1.7;
+}
+.cinematic-credit > span {
+  display: block;
+  opacity: 0.75;
+}
+.cinematic-progress {
+  position: absolute;
+  left: 3%;
+  top: 42%;
+  height: 120px;
+  width: 1px;
+  background: var(--hero-line);
+}
+.cinematic-progress > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--hero-accent);
+  transform: scaleY(var(--hero-progress));
+  transform-origin: top;
+}
+.cinematic-loading {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  opacity: 0;
+  transition: opacity 0.4s;
+}
+[data-loading='true'] .cinematic-loading {
+  opacity: 1;
+}
+.cinematic-loading > span {
+  display: block;
+  height: 100%;
+  background: var(--hero-brass);
+  transform-origin: left;
+  transform: scaleX(var(--hero-loaded, 0));
+  transition: transform 0.2s;
+}
+.cinematic-end-anchor {
+  position: absolute;
+  bottom: 0;
+  scroll-margin-top: var(--site-header-height);
+}
+.public-site .site-header[data-cinematic='true'] {
+  background: color-mix(in srgb, var(--hero-paper) 88%, transparent);
+  color: var(--hero-ink);
+  backdrop-filter: blur(18px);
+  border-bottom-color: var(--hero-line);
+}
+.public-site .site-header[data-cinematic='true'][data-over-hero='true'] {
+  background: transparent;
+  backdrop-filter: none;
+  border-bottom-color: transparent;
+}
+.public-site .site-header[data-cinematic='true'] .header-project-link {
+  background: var(--header-button);
+  color: var(--header-button-text);
+  border-color: var(--header-button);
+  border-radius: 4px;
+}
+.public-site .site-header[data-cinematic='true'] .mobile-nav {
+  background: var(--hero-paper);
+  color: var(--hero-ink);
+}
+.public-site .site-header[data-cinematic='true'] .desktop-nav a {
+  color: var(--header-link);
+}
+.public-site .site-header[data-cinematic='true'] .desktop-nav a[aria-current] {
+  color: var(--header-link);
+}
+.public-site .site-header[data-cinematic='true'] .desktop-nav a::after {
+  background: var(--header-link);
+}
+.public-site .site-header[data-cinematic='true'] .mobile-nav > a {
+  color: var(--header-link);
+}
+@keyframes cinematic-scroll {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+@media (min-width: 1800px) {
+  .cinematic-intro {
+    width: 660px;
+  }
+}
+@media (max-width: 1000px) {
+  .cinematic-intro {
+    left: 7%;
+    width: 60%;
+  }
+  .cinematic-chapter-marks {
+    gap: 18px;
+  }
+}
+@media (max-width: 767px) {
+  .cinematic-intro {
+    left: 7%;
+    width: 86%;
+    bottom: 21%;
+  }
+  .public-site .cinematic-hero h1 {
+    max-width: 440px;
+    font-size: clamp(46px, 9vw, 68px);
+  }
+  .cinematic-description {
+    max-width: 310px;
+    font-size: 12px;
+    margin-block: 22px;
+  }
+  .cinematic-eyebrow {
+    margin-bottom: 20px;
+    font-size: 9px;
+  }
+  .cinematic-topline {
+    inset-inline: 7%;
+    top: calc(var(--site-header-height) + 22px);
+    font-size: 9px;
+  }
+  .cinematic-scrim::before {
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--hero-paper) 10%, transparent) 30%,
+      color-mix(in srgb, var(--hero-paper) 85%, transparent) 62%,
+      var(--hero-paper)
+    );
+  }
+  .cinematic-bottom {
+    inset-inline: 7%;
+    bottom: 25px;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 25px;
+  }
+  .cinematic-chapter-marks {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    justify-content: space-between;
+  }
+  .cinematic-chapter-mark {
+    flex: 1;
+    font-size: 10px;
+  }
+  .cinematic-scroll-cue {
+    gap: 10px;
+    font-size: 8px;
+  }
+  .cinematic-scroll-arrow {
+    width: 26px;
+    height: 36px;
+    font-size: 18px;
+  }
+  .cinematic-credit {
+    margin-inline-end: 54px;
+    font-size: 9px;
+  }
+  .cinematic-progress {
+    left: 3%;
+    top: 44%;
+    height: 80px;
+  }
+  .cinematic-chapter {
+    left: 7%;
+    bottom: 25%;
+  }
+  .cinematic-actions {
+    gap: 10px 20px;
+  }
+  .cinematic-text-link {
+    gap: 12px;
+    font-size: 11px;
+  }
+}
+@media (max-height: 650px) {
+  .cinematic-chapter-marks {
+    display: none;
+  }
+  .cinematic-bottom {
+    display: flex;
+    justify-content: space-between;
+  }
+  .cinematic-intro {
+    bottom: 18%;
+  }
+  .public-site .cinematic-hero h1 {
+    font-size: clamp(36px, 5.5vw, 66px);
+  }
+  .cinematic-eyebrow {
+    margin-bottom: 12px;
+  }
+  .cinematic-description {
+    margin-block: 12px;
+    line-height: 1.6;
+  }
+  .cinematic-bottom {
+    bottom: 15px;
+  }
+  .cinematic-topline {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cinematic-hero[data-enhanced='true'] {
+    height: 100svh;
+  }
+  .cinematic-canvas,
+  .cinematic-chapters,
+  .cinematic-finale,
+  .cinematic-progress,
+  .cinematic-loading {
+    display: none;
+  }
+  .cinematic-scroll-arrow {
+    animation: none;
+  }
+  .cinematic-hero *,
+  .cinematic-hero *::after {
+    transition: none;
+  }
+}

@@ -1,7 +1,7 @@
 /**
  * Brand mark for the RTM Tasarım assistant: an angular speech bubble framing a cabinet
  * elevation (frame, centre division, handle square). Stroke uses currentColor so it reads on
- * both the lime icon box and dark surfaces; the corner dot uses --assistant-icon-dot.
+ * both the brand icon box and dark surfaces; the corner dot uses --assistant-icon-dot.
  * Shared by the launcher and the panel avatar. No 'use client': it is static markup.
  */
 export function AssistantIcon({ className, dot = true }: { className?: string; dot?: boolean }) {

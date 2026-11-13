@@ -1,8 +1,10 @@
 import React from 'react'
 import localFont from 'next/font/local'
+import Script from 'next/script'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import './styles.css'
 import './design-quote.css'
+import './readability.css'
 import { getPublicSiteSettings } from '@/lib/siteSettings'
 import { PublicDesign } from '@/components/site/PublicDesign'
 import { ConsentProvider } from '@/components/consent/ConsentProvider'
@@ -10,6 +12,7 @@ import { AssistantLauncher } from '@/components/assistant/AssistantLauncher'
 import { getServerConsent } from '@/lib/consent/server'
 import { getAssistantPublicSettings } from '@/lib/assistantSettings'
 import { SiteToaster } from '@/components/site/SiteToaster'
+import { brandIcons } from '@/lib/brandMetadata'
 
 const workshop = localFont({
   src: [
@@ -47,6 +50,7 @@ const serif = localFont({
 export async function generateMetadata() {
   const settings = await getPublicSiteSettings()
   return {
+    icons: brandIcons,
     description:
       settings.defaultSeoDescription ||
       'RTM Tasarım — farklı şehirlerde iç mimarlık, mobilya ve uygulama projeleri.',
@@ -66,37 +70,53 @@ export default async function RootLayout(props: { children: React.ReactNode }) {
     version: consent.policy.version,
     privacyHref:
       settings.privacyNoticeUrl ||
-      (settings.privacyNoticeContent ? '/iletisim#aydinlatma-metni' : undefined),
+      (settings.privacyNoticeContent ? '/kvkk-aydinlatma-metni' : undefined),
     privacyExternal: Boolean(settings.privacyNoticeUrl),
     bannerTitle: consent.policy.bannerTitle,
     bannerDescription: consent.policy.bannerDescription,
   }
-  // Static except for the validated policy version; a future strict CSP needs its hash/nonce.
-  const themeScript = `(function(){var d=document.documentElement;d.dataset.rtmJs='true';try{var V=${JSON.stringify(policy.version)};var m=document.cookie.match(/(?:^|; )rtm-consent=([^;]*)/);var c=m&&JSON.parse(decodeURIComponent(m[1]));if(V!=='unconfigured'&&c&&c.v===V&&c.c&&c.c.f===1){d.dataset.theme=localStorage.getItem('rtm-theme')==='dark'?'dark':'light'}}catch(e){}})()`
-
   return (
     <html
       className={`${sans.variable} ${serif.variable} ${workshop.variable} ${mono.variable}`}
+      data-consent-policy-version={policy.version}
       data-scroll-behavior="smooth"
       data-theme="light"
       lang="tr"
       suppressHydrationWarning
     >
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: themeScript,
-          }}
-        />
-      </head>
       <body>
+        <Script id="homepage-reload-start" strategy="beforeInteractive">
+          {`(() => {
+            const navigation = performance.getEntriesByType('navigation')[0];
+            if (location.pathname !== '/' || navigation?.type !== 'reload') return;
+            const restoration = history.scrollRestoration;
+            history.scrollRestoration = 'manual';
+            const start = () => window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            start();
+            window.addEventListener('pageshow', () => {
+              start();
+              requestAnimationFrame(() => {
+                start();
+                history.scrollRestoration = restoration;
+              });
+            }, { once: true });
+          })();`}
+        </Script>
         <ConsentProvider
           policy={policy}
           initialDecided={consent.decided}
           initialChoices={consent.choices}
         >
           <ThemeProvider>
-            <PublicDesign>{children}</PublicDesign>
+            <PublicDesign
+              brand={{
+                companyName: settings.companyName,
+                logo: settings.logo,
+                siteCopy: settings.siteCopy,
+              }}
+            >
+              {children}
+            </PublicDesign>
             {assistant ? <AssistantLauncher settings={assistant} /> : null}
             <SiteToaster />
           </ThemeProvider>

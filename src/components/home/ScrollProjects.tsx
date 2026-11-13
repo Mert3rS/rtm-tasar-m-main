@@ -38,7 +38,12 @@ export function ScrollProjects({ projects }: { projects: ProjectCardData[] }) {
   return (
     <div className="project-timeline" ref={rootRef} aria-label="Seçili proje zaman çizgisi">
       {projects.map((project, index) => (
-        <article className="project-timeline-item" key={project.id}>
+        <article className="project-timeline-item" key={project.id} data-rtm-edit={`projects:${project.id}`} data-rtm-field="coverImage" data-rtm-label={`${project.title} · Seçili işler fotoğrafı`}>
+          <Link
+            className="project-timeline-card-link"
+            href={projectHref(project.slug)}
+            aria-label={`${project.title} projesini incele`}
+          />
           <div className="project-timeline-copy">
             <div className="project-scroll-copy">
               <p className="eyebrow">
@@ -50,20 +55,16 @@ export function ScrollProjects({ projects }: { projects: ProjectCardData[] }) {
               {project.description ? (
                 <p className="project-scroll-description">{project.description}</p>
               ) : null}
-              <Link href={projectHref(project.slug)} className="project-scroll-link">
+              <span className="project-scroll-link" aria-hidden="true">
                 Projeyi incele{' '}
                 <svg aria-hidden="true" viewBox="0 0 32 32">
                   <circle cx="16" cy="16" r="15" />
                   <path d="M8 16h15m-7-7 7 7-7 7" />
                 </svg>
-              </Link>
+              </span>
             </div>
           </div>
-          <Link
-            className="project-timeline-image"
-            href={projectHref(project.slug)}
-            aria-label={`${project.title} projesini incele`}
-          >
+          <div className="project-timeline-image">
             <div className="project-scroll-photo">
               {project.coverImage ? (
                 <Image
@@ -77,7 +78,7 @@ export function ScrollProjects({ projects }: { projects: ProjectCardData[] }) {
                 <span className="image-placeholder micro-label">Görsel hazırlanıyor</span>
               )}
             </div>
-          </Link>
+          </div>
         </article>
       ))}
     </div>

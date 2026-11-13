@@ -119,7 +119,7 @@ export const demoKnowledge: Knowledge = {
       examples: ['akrilik kapak nasıl temizlenir'],
       answer: rich('DEMO onaylı bakım cevabı.'),
       text: 'DEMO onaylı bakım cevabı.',
-      actions: [{ kind: 'route', label: 'Teklif al', href: '/teklif-al' }],
+      actions: [{ kind: 'route', label: 'Teklif al', href: '/iletisim' }],
       priority: 0,
     },
     {

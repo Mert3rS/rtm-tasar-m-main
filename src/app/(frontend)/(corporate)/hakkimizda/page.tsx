@@ -25,7 +25,7 @@ export default async function AboutPage() {
   const projects = await getSelectedProjects(about?.featuredProjectIds || [], 6)
   const title = about?.heading || 'Tasarımın Her Detayında Ustalık.'
   return (
-    <main className="about-page corporate-detail-page" id="main-content">
+    <main className="about-page corporate-detail-page" id="main-content" data-rtm-edit="about-page" data-rtm-label="Hakkımızda görselleri ve metinleri">
       <PageIntro
         number="05"
         eyebrow={about?.eyebrow || 'ATÖLYE / RTM TASARIM'}
@@ -37,6 +37,8 @@ export default async function AboutPage() {
           <Image
             alt={about.heroImage.alt}
             src={about.heroImage.url}
+            data-rtm-edit="about-page" data-rtm-field="heroImage"
+            data-rtm-label="Hakkımızda · Giriş fotoğrafı"
             width={about.heroImage.width}
             height={about.heroImage.height}
             loading="eager"
@@ -60,6 +62,8 @@ export default async function AboutPage() {
             <Image
               alt={about.storyImage.alt}
               src={about.storyImage.url}
+              data-rtm-edit="about-page" data-rtm-field="storyImage"
+              data-rtm-label="Hakkımızda · Şirket hikâyesi fotoğrafı"
               width={about.storyImage.width}
               height={about.storyImage.height}
               sizes="(min-width: 1024px) 45vw, 90vw"
@@ -114,6 +118,8 @@ export default async function AboutPage() {
               <Image
                 alt={about.teamImage.alt}
                 src={about.teamImage.url}
+                data-rtm-edit="about-page" data-rtm-field="teamImage"
+                data-rtm-label="Hakkımızda · Toplu ekip fotoğrafı"
                 width={about.teamImage.width}
                 height={about.teamImage.height}
                 sizes="(min-width: 1024px) 45vw, 90vw"
@@ -128,6 +134,8 @@ export default async function AboutPage() {
                     <Image
                       alt={member.image.alt}
                       src={member.image.url}
+                      data-rtm-edit="about-page" data-rtm-field="teamMembers"
+                      data-rtm-label={`${member.name} · Ekip portreleri`}
                       width={member.image.width}
                       height={member.image.height}
                       sizes="(min-width: 1024px) 25vw, 90vw"
@@ -175,6 +183,7 @@ export default async function AboutPage() {
       ) : null}
       {about?.gallery.length ? (
         <ProjectGallery
+          editor={{ target: 'about-page', field: 'galleryImages' }}
           images={about.gallery}
           title={title}
           heading="Stüdyodan detaylar"

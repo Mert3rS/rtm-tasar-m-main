@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 import { isAuthenticated } from '../access/isAuthenticated'
 import { slugField } from '../fields/slug'
+import { photoGuideField } from '../fields/photoGuide'
 import { preventShowroomWithScenesDelete } from '../hooks/validateShowroomScene'
 
 export const Showrooms: CollectionConfig = {
@@ -18,6 +19,7 @@ export const Showrooms: CollectionConfig = {
   },
   hooks: { beforeDelete: [preventShowroomWithScenesDelete] },
   fields: [
+    photoGuideField('showrooms'),
     {
       type: 'tabs',
       tabs: [
@@ -34,14 +36,24 @@ export const Showrooms: CollectionConfig = {
               label: 'Kısa açıklama',
             },
             { name: 'description', type: 'richText', label: 'Showroom anlatımı' },
-            { name: 'coverImage', type: 'upload', relationTo: 'media', label: 'Kapak görseli' },
+            {
+              name: 'coverImage',
+              type: 'upload',
+              relationTo: 'media',
+              label: 'Kapak görseli',
+              admin: {
+                description:
+                  'Showroom arşivindeki normal kapak fotoğrafı. 360° turun içindeki görüntüyü değiştirmek için Showroom sahneleri → 360° panorama alanını kullanın.',
+              },
+            },
             {
               name: 'relatedProject',
               type: 'relationship',
               relationTo: 'projects',
               label: 'İlgili portföy projesi',
               admin: {
-                description: 'Ziyaretçiye yalnızca yayınlanmış proje bağlantısı gösterilir.',
+                description:
+                  'Bu proje seçilip showroom yayınlandığında proje detayında 360° keşif alanı görünür. İlişki kurulmazsa alan gösterilmez.',
               },
             },
             { name: 'featured', type: 'checkbox', defaultValue: false, label: 'Öne çıkar' },

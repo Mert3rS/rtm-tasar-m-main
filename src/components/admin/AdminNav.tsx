@@ -21,11 +21,13 @@ import {
   UsersRound,
   type LucideIcon,
 } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import type { CollectionSlug, GlobalSlug } from 'payload'
 import { formatAdminURL } from 'payload/shared'
 
 import { AdminThemeToggle } from '@/components/admin/AdminThemeToggle'
+import { VISUAL_PAGES } from './visual-pages'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 import type { User } from '@/payload-types'
 import { Link, Logout, useAuth, useConfig, useEntityVisibility } from '@payloadcms/ui'
 import {
@@ -41,6 +43,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
+  useSidebar,
 } from '@/components/ui/sidebar'
 
 type EntityNavItem = {
@@ -75,17 +78,42 @@ const navSections: Array<{ items: EntityNavItem[]; label: string }> = [
     items: [
       { title: 'Başvurular', slug: 'inquiries', kind: 'collection', icon: ClipboardList },
       { title: 'Başvuru ekleri', slug: 'inquiry-attachments', kind: 'collection', icon: FileImage },
-      { title: 'Tasarım bağlantıları', slug: 'design-shares', kind: 'collection', icon: MessageSquareText },
+      {
+        title: 'Tasarım bağlantıları',
+        slug: 'design-shares',
+        kind: 'collection',
+        icon: MessageSquareText,
+      },
     ],
   },
   {
     label: 'ASİSTAN',
     items: [
-      { title: 'Asistan ayarları', slug: 'assistant-settings', kind: 'global', icon: BotMessageSquare },
-      { title: 'Onaylı cevaplar', slug: 'assistant-answers', kind: 'collection', icon: MessageSquareText },
+      {
+        title: 'Asistan ayarları',
+        slug: 'assistant-settings',
+        kind: 'global',
+        icon: BotMessageSquare,
+      },
+      {
+        title: 'Onaylı cevaplar',
+        slug: 'assistant-answers',
+        kind: 'collection',
+        icon: MessageSquareText,
+      },
       { title: 'Sık sorulan sorular', slug: 'faqs', kind: 'collection', icon: CircleHelp },
-      { title: 'Yanıtlanamayanlar', slug: 'assistant-unanswered', kind: 'collection', icon: CircleHelp },
-      { title: 'Geri bildirimler', slug: 'assistant-feedback', kind: 'collection', icon: MessageSquareText },
+      {
+        title: 'Yanıtlanamayanlar',
+        slug: 'assistant-unanswered',
+        kind: 'collection',
+        icon: CircleHelp,
+      },
+      {
+        title: 'Geri bildirimler',
+        slug: 'assistant-feedback',
+        kind: 'collection',
+        icon: MessageSquareText,
+      },
     ],
   },
   {
@@ -103,8 +131,46 @@ const navSections: Array<{ items: EntityNavItem[]; label: string }> = [
 const isCurrentPath = (pathname: string, href: string) =>
   pathname === href || pathname.startsWith(`${href}/`)
 
+function SitePageMenu({
+  dashboardHref,
+  pathname,
+  selectedPage,
+}: {
+  dashboardHref: string
+  pathname: string
+  selectedPage: string | null
+}) {
+  const { isMobile, setOpenMobile } = useSidebar()
+  return (
+    <SidebarMenu className="gap-0.5" aria-label="Site sayfaları">
+      {VISUAL_PAGES.map((page) => (
+        <SidebarMenuItem key={page.id}>
+          <SidebarMenuButton
+            asChild
+            className="h-9 gap-2.5 rounded-lg px-2.5"
+            tooltip={page.title}
+            isActive={pathname === dashboardHref && (selectedPage || 'home') === page.id}
+          >
+            <Link
+              href={`${dashboardHref}?page=${page.id}`}
+              prefetch={false}
+              onClick={() => {
+                if (isMobile) setOpenMobile(false)
+              }}
+            >
+              <Globe2 className="text-muted-foreground" />
+              <span>{page.title}</span>
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  )
+}
+
 export function AdminNav() {
   const pathname = usePathname()
+  const search = useSearchParams()
   const { user } = useAuth<User>()
   const { config } = useConfig()
   const { isEntityVisible } = useEntityVisibility()
@@ -127,11 +193,9 @@ export function AdminNav() {
                   prefetch={false}
                 >
                   <span className="rtm-admin-sidebar-mark">
-                    R
+                    <BrandLogo decorative variant="icon" />
                   </span>
-                  <span className="rtm-admin-sidebar-title">
-                    RTM Tasarım
-                  </span>
+                  <BrandLogo ariaLabel="RTM Tasarım" className="rtm-admin-sidebar-title" />
                 </Link>
                 <SidebarTrigger
                   aria-label="Kenar çubuğunu aç veya daralt"
@@ -155,15 +219,28 @@ export function AdminNav() {
                     asChild
                     className="h-9 gap-2.5 rounded-lg px-2.5"
                     isActive={pathname === dashboardHref}
-                    tooltip="Genel Bakış"
+                    tooltip="Site içeriği"
                   >
                     <Link href={dashboardHref} prefetch={false}>
                       <LayoutDashboard />
-                      <span>Genel Bakış</span>
+                      <span>Site içeriği</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <SidebarGroup className="px-3 py-2">
+            <SidebarGroupLabel className="px-2.5 text-[0.6875rem] tracking-wider">
+              SİTE SAYFALARI
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SitePageMenu
+                dashboardHref={dashboardHref}
+                pathname={pathname}
+                selectedPage={search.get('page')}
+              />
             </SidebarGroupContent>
           </SidebarGroup>
 
@@ -217,7 +294,11 @@ export function AdminNav() {
         <SidebarFooter className="gap-3 px-3 pb-5">
           <SidebarMenu className="gap-0.5">
             <SidebarMenuItem>
-              <SidebarMenuButton asChild className="h-9 gap-2.5 rounded-lg px-2.5" tooltip="Hesabım">
+              <SidebarMenuButton
+                asChild
+                className="h-9 gap-2.5 rounded-lg px-2.5"
+                tooltip="Hesabım"
+              >
                 <Link href={accountHref} prefetch={false}>
                   <span className="flex size-5 items-center justify-center rounded-full bg-muted font-semibold text-[0.6875rem]">
                     {initial}
@@ -227,7 +308,11 @@ export function AdminNav() {
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild className="h-9 gap-2.5 rounded-lg px-2.5" tooltip="Hesap ayarları">
+              <SidebarMenuButton
+                asChild
+                className="h-9 gap-2.5 rounded-lg px-2.5"
+                tooltip="Hesap ayarları"
+              >
                 <Link href={accountHref} prefetch={false}>
                   <UserRound className="text-muted-foreground" />
                   <span>Hesap ayarları</span>

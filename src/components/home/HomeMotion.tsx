@@ -32,12 +32,25 @@ export function HomeMotion({ children }: { children: React.ReactNode }) {
         for (const entry of entries) {
           if (!entry.isIntersecting || !(entry.target instanceof HTMLElement)) continue
           entry.target.dataset.revealed = 'true'
+          const blur = entry.target.dataset.revealEffect === 'blur'
+          const parsedDelay = Number.parseInt(entry.target.dataset.revealDelay || '0', 10)
+          const delay = Number.isFinite(parsedDelay) ? Math.max(0, parsedDelay) : 0
           entry.target.animate(
-            [
-              { opacity: 0, transform: 'translateY(38px)' },
-              { opacity: 1, transform: 'translateY(0)' },
-            ],
-            { duration: 850, easing: 'cubic-bezier(.16,1,.3,1)' },
+            blur
+              ? [
+                  { filter: 'blur(12px)', opacity: 0, transform: 'translateY(30px)' },
+                  { filter: 'blur(0)', opacity: 1, transform: 'translateY(0)' },
+                ]
+              : [
+                  { opacity: 0, transform: 'translateY(38px)' },
+                  { opacity: 1, transform: 'translateY(0)' },
+                ],
+            {
+              delay,
+              duration: blur ? 900 : 850,
+              easing: 'cubic-bezier(.16,1,.3,1)',
+              fill: 'backwards',
+            },
           )
           observer.unobserve(entry.target)
         }

@@ -61,6 +61,23 @@ describe('Contact input boundaries', () => {
     ])
       expect(validateInquiry({ ...quote, ...change }).errors).toBeDefined()
   })
+  it('validates the streamlined project contact form and enforces its 500 character limit', () => {
+    const projectContact = {
+      ...contact,
+      projectContact: true,
+      phone: '+90 555 000 00 00',
+      message: 'a'.repeat(500),
+    }
+    const result = validateInquiry(projectContact)
+    expect(result.data?.subject).toBe('Proje başvurusu')
+    expect(result.data?.message).toHaveLength(500)
+    for (const change of [
+      { phone: '' },
+      { message: 'a'.repeat(501) },
+      { projectContact: 'yes' },
+    ])
+      expect(validateInquiry({ ...projectContact, ...change }).errors).toBeDefined()
+  })
   it('rejects credential-bearing and executable URLs and malformed phone links', () => {
     for (const value of [
       'javascript:alert(1)',

@@ -229,10 +229,18 @@ export function DesignQuote({
         </p>
         <p className="dq-dimension-label">Genişlik × yükseklik × derinlik</p>
         {design.k ? <p className="dq-kitchen-plan">{kitchenDescription(design)}</p> : null}
-        {design.tvUnit ? <p className="dq-kitchen-plan dq-tv-plan">{tvDetails(design)[0]?.[1]}</p> : null}
-        {design.bathroom ? <p className="dq-kitchen-plan dq-bathroom-plan">{bathroomDetails(design)[0]?.[1]}</p> : null}
-        {design.entryway ? <p className="dq-kitchen-plan dq-entryway-plan">{entrywayDetails(design)[0]?.[1]}</p> : null}
-        {design.wardrobe ? <p className="dq-kitchen-plan dq-wardrobe-plan">{wardrobeDetails(design)[0]?.[1]}</p> : null}
+        {design.tvUnit ? (
+          <p className="dq-kitchen-plan dq-tv-plan">{tvDetails(design)[0]?.[1]}</p>
+        ) : null}
+        {design.bathroom ? (
+          <p className="dq-kitchen-plan dq-bathroom-plan">{bathroomDetails(design)[0]?.[1]}</p>
+        ) : null}
+        {design.entryway ? (
+          <p className="dq-kitchen-plan dq-entryway-plan">{entrywayDetails(design)[0]?.[1]}</p>
+        ) : null}
+        {design.wardrobe ? (
+          <p className="dq-kitchen-plan dq-wardrobe-plan">{wardrobeDetails(design)[0]?.[1]}</p>
+        ) : null}
         {whatsapp ? (
           <section className="dq-whatsapp-share" aria-label="WhatsApp ile tasarım paylaşımı">
             <a
@@ -251,13 +259,13 @@ export function DesignQuote({
             </p>
             <details className="dq-message">
               <summary>Mesaj önizlemesi</summary>
-              <label className="dq-check">
+              <label className="inquiry-check">
                 <input
                   type="checkbox"
                   checked={personal}
                   onChange={(event) => setPersonal(event.target.checked)}
                 />
-                Bilgilerimi de ekle (konum ve not)
+                <span>Bilgilerimi de ekle (konum ve not)</span>
               </label>
               <pre>{message}</pre>
             </details>
@@ -281,7 +289,14 @@ export function DesignQuote({
         >
           <div className="dq-drawing">
             <TechnicalDrawing config={design} />
-            <button type="button" ref={enlarge} className="dq-enlarge" onClick={() => dialog.current?.showModal()}>Teknik çizimi büyüt</button>
+            <button
+              type="button"
+              ref={enlarge}
+              className="dq-enlarge"
+              onClick={() => dialog.current?.showModal()}
+            >
+              Teknik çizimi büyüt
+            </button>
           </div>
         </div>
         <button

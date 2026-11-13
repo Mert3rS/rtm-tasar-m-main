@@ -22,6 +22,8 @@ const paths = {
   lock: 'M6 10h12v11H6zM8 10V7a4 4 0 0 1 8 0v3',
   unlock: 'M6 10h12v11H6zM8 10V7a4 4 0 0 1 7-2',
   help: 'M9 8a3 3 0 1 1 5 2c-2 1-2 2-2 4m0 3v1',
+  keyboard: 'M3 6h18v12H3zM7 10h.01M11 10h.01M15 10h.01M18 10h.01M7 14h.01M10 14h7',
+  info: 'M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0M12 11v6m0-10v.01',
   layers: 'm12 3 10 5-10 5L2 8zM2 12l10 5 10-5M2 16l10 5 10-5',
 } satisfies Record<string, string>
 

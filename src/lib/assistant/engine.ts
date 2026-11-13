@@ -514,7 +514,8 @@ class Replies {
   private contactActions(): ReplyAction[] {
     const s = this.knowledge.settings
     const actions: ReplyAction[] = []
-    if (s.quoteFormEnabled && s.privacyReady) actions.push(this.link('Teklif al', 'Get a quote', '/teklif-al'))
+    if (s.contactFormEnabled && s.privacyReady)
+      actions.push(this.link('İletişime geç', 'Contact us', '/iletisim'))
     if (s.whatsappHref) actions.push({ label: t(this.lang, settingsLinkLabels.whatsapp, 'Write on WhatsApp'), kind: 'external', href: s.whatsappHref })
     actions.push(this.link('İletişim', 'Contact', '/iletisim'))
     return actions
@@ -736,7 +737,7 @@ class Replies {
       ...this.base('faq', confidence),
       answerKey: `faq:${faq.id}`,
       blocks: [this.text(faq.question, faq.question), { type: 'rich', content: faq.answer }],
-      actions: [this.link('Tüm sorular', 'All questions', '/sss')],
+      actions: [],
       chips: this.popularChips().slice(0, 3),
       entities,
     }
@@ -1072,10 +1073,10 @@ class Replies {
   private quote(entities: Entities): Draft {
     const s = this.knowledge.settings
     const draft = this.base('quote')
-    if (!s.quoteFormEnabled || !s.privacyReady)
+    if (!s.contactFormEnabled || !s.privacyReady)
       return {
         ...draft,
-        blocks: [this.text('Teklif formu şu anda gönderime kapalı. Mevcut iletişim kanallarımızdan bize ulaşabilirsiniz.', 'The quote form is currently closed. Please use our contact channels.')],
+        blocks: [this.text('İletişim formu şu anda gönderime kapalı. Mevcut iletişim kanallarımızdan bize ulaşabilirsiniz.', 'The contact form is currently closed. Please use our contact channels.')],
         actions: this.contactActions(),
         entities,
       }
@@ -1083,12 +1084,12 @@ class Replies {
       ...draft,
       blocks: [
         this.text(
-          'Teklif formunda ad soyad, e-posta, telefon, proje kategorisi, projenin bulunduğu şehir ve kısa bir proje açıklaması istenir; yaklaşık alan, bütçe aralığı ve iletişim tercihi isteğe bağlıdır. Başvurunuz kaydedildikten sonra ekibimiz sizinle iletişime geçer. Lütfen kişisel bilgilerinizi sohbete yazmayın, doğrudan formu kullanın.',
-          'The quote form asks for your name, e-mail, phone, project category, city and a short description; area, budget range and contact preference are optional. Please do not share personal data in the chat; use the form directly.',
+          'İletişim sayfasındaki proje formunda ad soyad, e-posta, telefon ve en fazla 500 karakterlik proje açıklaması istenir. Lütfen kişisel bilgilerinizi sohbete yazmayın, doğrudan formu kullanın.',
+          'The project form on the contact page asks for your name, e-mail, phone and a project description of up to 500 characters. Please do not share personal data in the chat; use the form directly.',
         ),
         this.text('Tasarım atölyesinde hazırladığınız tasarımı da teklifinize ekleyebilirsiniz.', 'You can also attach a design created in the design studio.'),
       ],
-      actions: [this.link('Teklif al', 'Get a quote', '/teklif-al'), this.link('Tasarım atölyesi', 'Design studio', studioHref(entities.product))],
+      actions: [this.link('İletişime geç', 'Contact us', '/iletisim'), this.link('Tasarım atölyesi', 'Design studio', studioHref(entities.product))],
       entities,
     }
   }
@@ -1167,7 +1168,7 @@ class Replies {
               : this.text('Bu projeye benzer başka yayınlanmış proje bulunmuyor.', 'No similar published projects yet.'),
           ],
           cards: similar,
-          actions: [this.link('Benzer bir proje için teklif al', 'Get a quote for a similar project', '/teklif-al')],
+          actions: [this.link('Benzer bir proje için teklif al', 'Get a quote for a similar project', '/iletisim')],
           entities: { ...entities, project: project.slug },
         }
       }
@@ -1188,7 +1189,7 @@ class Replies {
             ),
           ],
           cards: similar,
-          actions: [this.link('Benzerini tasarla', 'Design a similar one', '/tasarim-olustur'), this.link('Bilgi al', 'Ask about it', '/teklif-al')],
+          actions: [this.link('Benzerini tasarla', 'Design a similar one', '/tasarim-olustur'), this.link('Bilgi al', 'Ask about it', '/iletisim')],
           entities: { ...entities, model: model.slug },
         }
       }
@@ -1196,7 +1197,7 @@ class Replies {
     if (page?.kind === 'service') {
       const service = this.knowledge.services.find((item) => item.slug === page.slug)
       if (service)
-        return { ...draft, blocks: [this.text(service.description || service.title, service.description || service.title)], actions: [this.link('Teklif al', 'Get a quote', '/teklif-al')], entities: { ...entities, service: service.slug } }
+        return { ...draft, blocks: [this.text(service.description || service.title, service.description || service.title)], actions: [this.link('Teklif al', 'Get a quote', '/iletisim')], entities: { ...entities, service: service.slug } }
     }
     if (page?.kind === 'showroom') {
       const showroom = this.knowledge.showrooms.find((item) => item.slug === page.slug)
@@ -1206,7 +1207,7 @@ class Replies {
           ...draft,
           blocks: [this.text(showroom.description || showroom.title, showroom.description || showroom.title)],
           cards: project ? [projectCard(project)] : [],
-          actions: [this.link('Bu tasarım için bilgi al', 'Ask about this design', '/teklif-al')],
+          actions: [this.link('Bu tasarım için bilgi al', 'Ask about this design', '/iletisim')],
           entities: { ...entities, showroom: showroom.slug },
         }
       }
@@ -1247,14 +1248,16 @@ class Replies {
         ...draft,
         blocks: [
           this.text(
-            `${label} için önerilerim: ${[services.length ? 'ilgili hizmetler' : '', models.length ? 'tasarım modelleri' : '', 'tasarım atölyesinde ilk taslak', 'teklif formu'].filter(Boolean).join(', ')}.`,
-            `For ${label}: related services, models, a first draft in the design studio and the quote form.`,
+            `${label} için önerilerim: ${[services.length ? 'ilgili hizmetler' : '', models.length ? 'tasarım modelleri' : '', 'tasarım atölyesinde ilk taslak', 'iletişim sayfasındaki proje formu'].filter(Boolean).join(', ')}.`,
+            `For ${label}: related services, models, a first draft in the design studio and the project form on the contact page.`,
           ),
         ],
         cards: [...services.slice(0, 2).map(serviceCard), ...models.slice(0, 2).map(modelCard)],
         actions: [
           this.link(product ? `${productInfo[product].label} tasarla` : 'Tasarım atölyesi', 'Design studio', studioHref(product)),
-          ...(this.knowledge.settings.quoteFormEnabled && this.knowledge.settings.privacyReady ? [this.link('Teklif al', 'Get a quote', '/teklif-al')] : this.contactActions()),
+          ...(this.knowledge.settings.contactFormEnabled && this.knowledge.settings.privacyReady
+            ? [this.link('İletişime geç', 'Contact us', '/iletisim')]
+            : this.contactActions()),
         ],
         chips: [back],
         entities: product ? { product } : {},
@@ -1337,7 +1340,7 @@ function settingsHref(s: Knowledge['settings'], key: SettingsLinkKey): string | 
     case 'maps':
       return s.mapsHref
     case 'privacyNotice':
-      return s.privacyNoticeUrl || (s.privacyReady ? '/iletisim#aydinlatma-metni' : undefined)
+      return s.privacyNoticeUrl || (s.privacyReady ? '/kvkk-aydinlatma-metni' : undefined)
     case 'cookiePolicy':
       return '/cerez-politikasi'
     default:

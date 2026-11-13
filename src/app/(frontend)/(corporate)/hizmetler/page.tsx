@@ -1,3 +1,4 @@
+import { EditableRegion } from '@/components/site/EditableRegion'
 import { PageIntro } from '@/components/site/PageIntro'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -7,40 +8,43 @@ import { catalogHref, parseModelQuery } from '@/lib/catalogQuery'
 import { portfolioMetadata } from '@/lib/seo'
 import { CorporateCTA } from '@/components/catalog/CorporateCTA'
 import { CatalogPagination } from '@/components/catalog/CatalogPagination'
+import { getPublicSiteSettings } from '@/lib/siteSettings'
 
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> }
 export async function generateMetadata({ searchParams }: Props) {
   const query = await searchParams
+  const settings = await getPublicSiteSettings()
   return portfolioMetadata({
-    title: 'Hizmetlerimiz | RTM Tasarım',
-    description: 'Mekânların ihtiyaçlarına özel tasarım ve uygulama çözümleri.',
+    title: `${settings.siteCopy.navServices} | ${settings.companyName}`,
+    description: settings.siteCopy.servicesDescription,
     path: '/hizmetler',
     noindex: Object.keys(query).length > 0,
   })
 }
 export default async function ServicesPage({ searchParams }: Props) {
+  const settings = await getPublicSiteSettings()
   const { page } = parseModelQuery(await searchParams)
   const result = await getServicesPage(page)
   if (page > Math.max(1, result.totalPages))
     redirect(result.totalPages > 1 ? `/hizmetler?sayfa=${result.totalPages}` : '/hizmetler')
   return (
-    <main id="main-content" className="corporate-list-page">
+    <main id="main-content" className="corporate-list-page services-page">
       <PageIntro
         number="03"
-        eyebrow="ÇALIŞMA ALANLARIMIZ"
+        eyebrow={settings.siteCopy.servicesEyebrow}
         title={
           <>
-            Tasarımdan
+            {settings.siteCopy.servicesTitle}
             <br />
-            uygulamaya<span className="accent">.</span>
+            {settings.siteCopy.servicesTitleSecond}<span className="accent">.</span>
           </>
         }
-        description="Mekânların ihtiyaçlarına özel tasarım ve uygulama çözümleri."
+        description={settings.siteCopy.servicesDescription}
       />
       <section className="site-shell service-editorial-list" aria-label="Hizmetler">
         {result.services.length ? (
           result.services.map((service, index) => (
-            <article key={service.id} className="service-editorial-row">
+            <EditableRegion as="article" key={service.id} className="service-editorial-row" data-rtm-edit={`services:${service.id}`} data-rtm-field="coverImage" data-rtm-label={`${service.title} · Hizmet kapağı ve açıklaması`}>
               <Link
                 className="service-editorial-image"
                 href={catalogHref('service', service.slug)}
@@ -70,7 +74,7 @@ export default async function ServicesPage({ searchParams }: Props) {
                   Hizmeti İnceleyin ↗
                 </Link>
               </div>
-            </article>
+            </EditableRegion>
           ))
         ) : (
           <div className="archive-empty">

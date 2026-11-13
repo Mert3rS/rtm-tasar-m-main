@@ -1,9 +1,18 @@
+import { EditableRegion } from '@/components/site/EditableRegion'
 import Link from 'next/link'
+import { BrandLogo } from '@/components/brand/BrandLogo'
 import { ScrollProjects } from './ScrollProjects'
 import type { ProjectCardData } from '@/types/portfolio'
 import { TextAnimate } from '@/components/site/TextAnimate'
+import type { HomepageCopy } from '@/lib/homepageContent'
 
-export function FeaturedProjects({ projects }: { projects: ProjectCardData[] }) {
+export function FeaturedProjects({
+  projects,
+  copy,
+}: {
+  projects: ProjectCardData[]
+  copy: HomepageCopy
+}) {
   return (
     <section
       aria-labelledby="projects-heading"
@@ -11,12 +20,12 @@ export function FeaturedProjects({ projects }: { projects: ProjectCardData[] }) 
       id="projeler"
     >
       <div className="site-shell">
-        <div className="section-heading">
+        <EditableRegion as="div" className="section-heading" data-rtm-edit="site-settings" data-rtm-field="homepage__projectsHeading" data-rtm-label="Seçili işler başlık ve açıklaması">
           <div>
             <p className="eyebrow">02 / SEÇİLİ İŞLER</p>
             <h2 id="projects-heading">
               <TextAnimate animation="slideUp" as="span" by="word" duration={0.52}>
-                Yaşayan
+                {copy.projectsHeading}
               </TextAnimate>{' '}
               <em>
                 <TextAnimate
@@ -27,15 +36,15 @@ export function FeaturedProjects({ projects }: { projects: ProjectCardData[] }) 
                   duration={0.46}
                   stagger={0.026}
                 >
-                  mekânlar.
+                  {copy.projectsEmphasis}
                 </TextAnimate>
               </em>
             </h2>
           </div>
           <TextAnimate animation="fadeIn" as="p" by="line" className="section-intro" delay={0.16}>
-            {'Her detayında tasarım,\nişçilik ve özgünlük.'}
+            {copy.projectsDescription}
           </TextAnimate>
-        </div>
+        </EditableRegion>
         {projects.length ? (
           <ScrollProjects projects={projects} />
         ) : (
@@ -55,7 +64,7 @@ export function FeaturedProjects({ projects }: { projects: ProjectCardData[] }) 
               </h3>
               <p>Seçili projelerimizi çok yakında burada paylaşacağız.</p>
               <span className="empty-signature" aria-hidden="true">
-                rtm.
+                <BrandLogo className="brand-logo brand-logo--signature" decorative variant="mark" />
               </span>
             </div>
           </div>

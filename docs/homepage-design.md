@@ -1,5 +1,10 @@
 # RTM — Public website redesign v2
 
+11 Kasım 2026: en üstteki fotoğraf kolajı, kullanıcının yeni talebiyle boş odanın
+yeşil mutfağa dönüştüğü özgün, kaydırmayla sürülen 3B filmle değiştirildi. Güncel kaynak ve kare üretimi
+ve davranışlar: [Sinematik açılış](cinematic-hero.md). Aşağıdaki spotlight bölümü
+önceki tasarımı belgeler; diğer ana sayfa bölümleri bu değişikliğin dışındadır.
+
 Latest brief: replace the public website design entirely, use the supplied
 Sumit011 spotlight hero, replace the globe with a flat dotted project map, and
 preserve `/tasarim-olustur`. No schema, content records, access policies or inquiry

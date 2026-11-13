@@ -118,7 +118,7 @@ function ActionButton({ action, onNavigate }: { action: ReplyAction; onNavigate:
   if (action.kind === 'internal') {
     const href = safeInternalHref(action.href)
     if (!href) return null
-    const quote = href.startsWith('/teklif-al')
+    const quote = action.label.toLocaleLowerCase('tr-TR').includes('teklif')
     const studio = href.startsWith('/tasarim-olustur')
     return (
       <Link className={`assistant-action${quote ? ' assistant-action-signal' : ''}`} href={href} onClick={onNavigate}>

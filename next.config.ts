@@ -7,19 +7,19 @@ const __filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(__filename)
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: '/teklif-al',
+        destination: '/iletisim',
+        permanent: true,
+      },
+    ]
+  },
   images: {
     localPatterns: [
       {
         pathname: '/api/media/file/**',
-      },
-    ],
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '1qldjncltmptxwup.public.blob.vercel-storage.com',
-        port: '',
-        pathname: '/**',
-        search: '',
       },
     ],
   },

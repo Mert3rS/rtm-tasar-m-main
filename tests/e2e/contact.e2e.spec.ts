@@ -11,8 +11,20 @@ test('communication pages and navigation work with existing settings', async ({ 
     'href',
     '/iletisim',
   )
+  const form = page.locator('form')
+  await expect(form.getByLabel('Ad soyad', { exact: false })).toBeVisible()
+  await expect(form.getByLabel('E-posta', { exact: false })).toBeVisible()
+  await expect(form.getByLabel('Telefon', { exact: false })).toBeVisible()
+  await expect(form.getByLabel('Projeniz hakkında', { exact: false })).toHaveAttribute(
+    'maxlength',
+    '500',
+  )
+  await expect(form.locator('#inquiry-subject')).toHaveCount(0)
+  await expect(form.locator('#inquiry-projectCategory')).toHaveCount(0)
+  await expect(form.locator('#inquiry-projectCity')).toHaveCount(0)
   await page.goto(`${origin}/teklif-al`)
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Projenizikonuşalım.')
+  await expect(page).toHaveURL(`${origin}/iletisim`)
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Birliktetasarlayalım.')
 })
 
 test('secure inquiries, idempotency, site settings and native admin management', async ({
@@ -76,24 +88,26 @@ test('secure inquiries, idempotency, site settings and native admin management',
       page.locator('main').getByRole('link', { name: 'demo-contact@example.invalid' }),
     ).toHaveAttribute('href', 'mailto:demo-contact@example.invalid')
     await expect(
-      page.locator('main').getByRole('link', { name: /WhatsApp ile görüşelim/ }),
+      page.locator('main').getByRole('link', { name: /WhatsApp üzerinden görüşelim/ }),
     ).toHaveAttribute('href', /^https:\/\/wa\.me\/905550000000\?text=/)
     expect(await page.content()).not.toContain('phase6-private-recipient@example.invalid')
     await page
       .getByText('Kişisel verilerin işlenmesine ilişkin aydınlatma metni', { exact: true })
       .click()
     await expect(page.getByText('DEMO QA metni;', { exact: false })).toBeVisible()
+    const form = page.locator('form')
     await page.getByRole('button', { name: 'Mesajı Gönder' }).click()
-    await expect(page.locator('form').getByRole('alert')).toContainText(
+    await expect(page.locator('form').getByRole('status')).toContainText(
       'İşaretli alanları kontrol edin.',
     )
     await expect(page.locator('#inquiry-fullName')).toHaveAttribute('aria-invalid', 'true')
-    await page.getByLabel('Ad soyad', { exact: false }).fill(name)
-    await page.getByLabel('E-posta', { exact: false }).fill(email)
-    await page.getByLabel('Konu', { exact: false }).fill('DEMO iletişim testi')
-    await page
-      .getByLabel('Mesajınız', { exact: false })
-      .fill('DEMO yerel test mesajı. <img src=x onerror=alert(1)>')
+    await expect(page.locator('#inquiry-phone')).toHaveAttribute('aria-invalid', 'true')
+    await form.getByLabel('Ad soyad', { exact: false }).fill(name)
+    await form.getByLabel('E-posta', { exact: false }).fill(`${prefix}-project@example.invalid`)
+    await form.getByLabel('Telefon', { exact: false }).fill('+90 555 000 00 01')
+    await form
+      .getByLabel('Projeniz hakkında', { exact: false })
+      .fill('DEMO projenin ihtiyaçlarını anlatan test açıklaması.')
     await page.screenshot({ path: testInfo.outputPath('contact-light.png'), fullPage: true })
     const tokenResponse = await page.request.get(`${origin}/api/inquiry-token`)
     const { token } = await tokenResponse.json()
@@ -148,8 +162,10 @@ test('secure inquiries, idempotency, site settings and native admin management',
     )
     await page.getByRole('button', { name: 'Mesajı Gönder' }).click()
     await saved
-    await expect(page.getByRole('status')).toContainText('Başvurunuz kaydedildi.')
-    await expect(page.getByRole('status')).toBeFocused()
+    await expect(page.locator('.inquiry-success[role="status"]')).toContainText(
+      'Başvurunuz kaydedildi.',
+    )
+    await expect(page.locator('.inquiry-success[role="status"] h2')).toBeFocused()
     expect(await page.content()).not.toContain('<img src="x"')
     for (const url of [
       '/api/inquiries',
@@ -172,38 +188,17 @@ test('secure inquiries, idempotency, site settings and native admin management',
       data: { name: `DEMO ${prefix} kategori`, slug: `${prefix}-category`, active: true },
     })
     categoryId = category.id
-    await page.goto(`${origin}/teklif-al`)
-    await expect(
-      page
-        .getByLabel('Proje kategorisi', { exact: false })
-        .getByRole('option', { name: category.name }),
-    ).toHaveCount(1)
-    await page.getByRole('button', { name: 'Teklif Talebini Gönder' }).click()
-    await expect(page.locator('#inquiry-phone')).toHaveAttribute('aria-invalid', 'true')
-    await page.getByLabel('Ad soyad', { exact: false }).fill(name)
-    await page.getByLabel('E-posta', { exact: false }).fill(`${prefix}-quote@example.invalid`)
-    await page.getByLabel('Telefon', { exact: false }).fill('+90 555 000 00 01')
-    await page.getByLabel('Proje kategorisi', { exact: false }).selectOption(String(category.id))
-    await page.getByLabel('Projenin bulunduğu şehir', { exact: false }).fill('DEMO şehir')
-    await page.getByLabel('Yaklaşık alan', { exact: false }).fill('125,5')
-    await page
-      .getByLabel('Projeniz hakkında', { exact: false })
-      .fill('DEMO projenin ihtiyaçlarını anlatan test açıklaması.')
-    await page.getByRole('button', { name: 'Koyu tema' }).click()
-    await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(16, 20, 17)')
-    for (const width of [1024, 768, 390, 320]) {
-      await page.setViewportSize({ width, height: 844 })
-      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
-        false,
-      )
-    }
-    await page.screenshot({ path: testInfo.outputPath('quote-dark-mobile.png'), fullPage: true })
-    const quoteSaved = page.waitForResponse(
-      (response) => response.url().endsWith('/api/inquiry-submit') && response.status() === 201,
-    )
-    await page.getByRole('button', { name: 'Teklif Talebini Gönder' }).click()
-    await quoteSaved
-    await expect(page.getByRole('status')).toContainText('Başvurunuz kaydedildi.')
+    const quoteResponse = await post({
+      ...contact,
+      inquiryType: 'quote',
+      email: `${prefix}-quote@example.invalid`,
+      phone: '+90 555 000 00 01',
+      projectCategory: String(category.id),
+      projectCity: 'DEMO Şehir',
+      estimatedArea: '125,5',
+      idempotencyKey: crypto.randomUUID(),
+    })
+    expect(quoteResponse.status()).toBe(201)
     records = await payload.find({
       collection: 'inquiries',
       overrideAccess: true,
@@ -300,7 +295,10 @@ test('secure inquiries, idempotency, site settings and native admin management',
     })
     lastSettingsUpdate = disabled.updatedAt
     await page.goto(`${origin}/iletisim`)
-    await expect(page.getByText('Form şu anda gönderime kapalı.')).toBeVisible()
+    await expect(
+      page.getByText('Form yönetim panelinden etkinleştirildiğinde gönderime açılacak.'),
+    ).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Gönderim henüz açık değil' })).toBeDisabled()
     expect(
       (
         await post({
@@ -317,12 +315,14 @@ test('secure inquiries, idempotency, site settings and native admin management',
     })
     lastSettingsUpdate = noPrivacy.updatedAt
     await page.goto(`${origin}/iletisim`)
-    await expect(page.getByText(/Aydınlatma metnimiz hazırlanıyor/)).toBeVisible()
+    await expect(
+      page.getByText(/Onaylı aydınlatma metni yayınlandığında gönderime açılacak/),
+    ).toBeVisible()
     await page.goto(origin)
     await expect(page).toHaveTitle('DEMO Site Ayarları SEO')
     await expect(
-      page.getByRole('link', { name: 'Projenizi Konuşalım', exact: true }),
-    ).toHaveAttribute('href', '/teklif-al')
+      page.getByRole('link', { name: 'İletişime geçin', exact: true }),
+    ).toHaveAttribute('href', '/iletisim')
     expect(errors).toEqual([])
   } finally {
     const own = await payload.find({

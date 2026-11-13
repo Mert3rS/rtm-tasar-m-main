@@ -3,7 +3,12 @@ import { ProjectDescription } from '@/components/portfolio/ProjectDescription'
 import { CookiePreferencesButton } from '@/components/consent/CookiePreferencesButton'
 import { getPublicSiteSettings } from '@/lib/siteSettings'
 import { portfolioMetadata } from '@/lib/seo'
-import { categoryInfo, entriesFor, visibleOptionalCategories, type ConsentCategory } from '@/lib/consent/registry'
+import {
+  categoryInfo,
+  entriesFor,
+  visibleOptionalCategories,
+  type ConsentCategory,
+} from '@/lib/consent/registry'
 
 export async function generateMetadata() {
   const settings = await getPublicSiteSettings()
@@ -14,13 +19,19 @@ export async function generateMetadata() {
   })
 }
 
-const kindLabel = { cookie: 'Çerez', localStorage: 'Yerel depolama', sessionStorage: 'Sekme depolaması' }
+const kindLabel = {
+  cookie: 'Çerez',
+  localStorage: 'Yerel depolama',
+  sessionStorage: 'Sekme depolaması',
+}
 
 export default async function CookiePolicyPage() {
   const settings = await getPublicSiteSettings()
   const policy = settings.cookiePolicy
   const updated = policy.updatedAt
-    ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long', timeZone: 'Europe/Istanbul' }).format(new Date(policy.updatedAt))
+    ? new Intl.DateTimeFormat('tr-TR', { dateStyle: 'long', timeZone: 'Europe/Istanbul' }).format(
+        new Date(policy.updatedAt),
+      )
     : undefined
   return (
     <main id="main-content" className="policy-page">
@@ -36,8 +47,15 @@ export default async function CookiePolicyPage() {
       />
       <div className="site-shell policy-body">
         <div className="policy-actions">
-          <CookiePreferencesButton className="button-primary">Tercihleri değiştir</CookiePreferencesButton>
-          {policy.ready ? <span className="policy-meta">SÜRÜM {policy.version}{updated ? ` · SON GÜNCELLEME ${updated}` : ''}</span> : null}
+          <CookiePreferencesButton className="button-primary">
+            Tercihleri değiştir
+          </CookiePreferencesButton>
+          {policy.ready ? (
+            <span className="policy-meta">
+              SÜRÜM {policy.version}
+              {updated ? ` · SON GÜNCELLEME ${updated}` : ''}
+            </span>
+          ) : null}
         </div>
         {policy.content ? (
           <ProjectDescription content={policy.content} />
@@ -49,13 +67,19 @@ export default async function CookiePolicyPage() {
           </p>
         ) : (
           <p className="policy-empty" role="note">
-            Onaylı çerez politikası metni henüz yayınlanmadı. Bu süre boyunca sitede yalnızca aşağıdaki zorunlu kayıtlar kullanılır; isteğe bağlı çerezler ve kalıcı tercih kayıtları kapalıdır.
+            Onaylı çerez politikası metni henüz yayınlanmadı. Bu süre boyunca sitede yalnızca
+            aşağıdaki zorunlu kayıtlar kullanılır; isteğe bağlı çerezler ve kalıcı tercih kayıtları
+            kapalıdır.
           </p>
         )}
         <section className="policy-table-section" aria-labelledby="policy-table-heading">
           <h2 id="policy-table-heading">Kullanılan kayıtlar</h2>
           <p className="section-intro">
-            Bu tablo uygulamadaki kayıt listesinden otomatik oluşturulur. Hepsi birinci taraftır; üçüncü taraf takip, reklam veya analitik betiği kullanılmaz.
+            Bu tablo uygulamadaki kayıt listesinden otomatik oluşturulur. Hepsi birinci taraftır;
+            üçüncü taraf takip, reklam veya analitik betiği kullanılmaz.
+          </p>
+          <p className="policy-table-hint">
+            Tabloların tamamını görmek için yatay kaydırabilirsiniz.
           </p>
           {(['necessary', ...visibleOptionalCategories] as ConsentCategory[]).map((category) => {
             const entries = entriesFor(category)
@@ -64,7 +88,12 @@ export default async function CookiePolicyPage() {
                 <h3>{categoryInfo[category].title}</h3>
                 <p className="section-intro">{categoryInfo[category].description}</p>
                 {entries.length ? (
-                  <div className="consent-table-wrap">
+                  <div
+                    className="consent-table-wrap"
+                    role="region"
+                    aria-label={`${categoryInfo[category].title} kayıt tablosu`}
+                    tabIndex={0}
+                  >
                     <table className="consent-table">
                       <thead>
                         <tr>

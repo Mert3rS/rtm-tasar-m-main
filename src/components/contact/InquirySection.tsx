@@ -1,13 +1,16 @@
 import type { PublicSiteSettings } from '@/lib/siteSettings'
+import Link from 'next/link'
 import { InquiryForm } from './InquiryForm'
 
 export function InquirySection({
   settings,
   type,
+  projectContact = false,
   categories = [],
 }: {
   settings: PublicSiteSettings
   type: 'contact' | 'quote'
+  projectContact?: boolean
   categories?: { id: number; name: string }[]
 }) {
   const enabled = type === 'quote' ? settings.quoteFormEnabled : settings.contactFormEnabled
@@ -22,6 +25,11 @@ export function InquirySection({
         <details className="privacy-notice" id="aydinlatma-metni">
           <summary>Kişisel verilerin işlenmesine ilişkin aydınlatma metni</summary>
           {settings.privacyNoticeContent ? <p>{settings.privacyNoticeContent}</p> : null}
+          {settings.privacyNoticeContent ? (
+            <Link className="text-link" href="/kvkk-aydinlatma-metni">
+              Aydınlatma metninin tamamını okuyun →
+            </Link>
+          ) : null}
           {settings.privacyNoticeUrl ? (
             <a
               className="text-link"
@@ -35,7 +43,7 @@ export function InquirySection({
         </details>
       ) : null}
       {enabled && privacyReady ? (
-        <InquiryForm type={type} categories={categories} />
+        <InquiryForm type={type} categories={categories} projectContact={projectContact} />
       ) : (
         <>
           <div className="inquiry-preview-notice" role="status">
@@ -46,7 +54,12 @@ export function InquirySection({
                 : 'Formu aşağıda inceleyebilirsiniz. Onaylı aydınlatma metni yayınlandığında gönderime açılacak.'}
             </p>
           </div>
-          <InquiryForm categories={categories} previewOnly type={type} />
+          <InquiryForm
+            categories={categories}
+            previewOnly
+            projectContact={projectContact}
+            type={type}
+          />
         </>
       )}
     </div>

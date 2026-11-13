@@ -26,8 +26,10 @@ for (const viewport of [
     if (viewport.width >= 1440) {
       const summary = page.getByRole('button', { name: 'Özet: Tasarım özeti', exact: true })
       if (await summary.getAttribute('aria-expanded') === 'false') await summary.click()
+      await page.getByRole('button', { name: 'Özeti kapat', exact: true }).click()
     }
     const open = page.getByRole('button', { name: 'Tüm kapakları aç', exact: true })
+    if (viewport.width < 768) await page.getByRole('button', { name: 'Önizleme araçları', exact: true }).click()
     await expect(open).toBeInViewport({ ratio: 1 })
     await expect(open).toContainText('Tüm kapakları aç')
     await open.click()
@@ -48,7 +50,9 @@ for (const viewport of [
     await page.getByRole('option', { name: '3', exact: true }).click()
     await expect(shelves).toContainText('3')
     await page.screenshot({ path: `.tools/controls-qa/studio-${viewport.width}-light.png` })
+    if (viewport.width < 1200) await page.getByRole('button', { name: 'Menüyü aç', exact: true }).click()
     await page.getByRole('button', { name: 'Koyu temaya geç', exact: true }).click()
+    if (viewport.width < 1200) await page.keyboard.press('Escape')
     await page.screenshot({ path: `.tools/controls-qa/studio-${viewport.width}-dark.png` })
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
     expect(errors).toEqual([])

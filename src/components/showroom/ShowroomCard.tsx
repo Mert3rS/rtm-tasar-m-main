@@ -1,3 +1,4 @@
+import { EditableRegion } from '@/components/site/EditableRegion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { showroomHref } from '@/lib/showroomData'
@@ -5,7 +6,7 @@ import type { ShowroomCardData } from '@/types/showroom'
 
 export function ShowroomCard({ showroom }: { showroom: ShowroomCardData }) {
   return (
-    <article className="showroom-card">
+    <EditableRegion as="article" className="showroom-card" data-rtm-edit={`showrooms:${showroom.id}`} data-rtm-field="coverImage" data-rtm-label={`${showroom.title} · Kapak ve açıklamalar`}>
       <Link aria-label={`${showroom.title} — Showroom'u Keşfet`} href={showroomHref(showroom.slug)}>
         <div className="showroom-card-image relative">
           {showroom.cover ? (
@@ -33,6 +34,6 @@ export function ShowroomCard({ showroom }: { showroom: ShowroomCardData }) {
       {showroom.relatedProject ? (
         <p className="micro-label muted mt-5">İlgili proje / {showroom.relatedProject.title}</p>
       ) : null}
-    </article>
+    </EditableRegion>
   )
 }

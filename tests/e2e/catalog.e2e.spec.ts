@@ -376,7 +376,7 @@ test('published corporate content, model filters, galleries, relationships and C
     await expect(trigger).toBeFocused()
     await expect(
       page.getByRole('link', { name: 'Bu Model İçin Bilgi Alın' }).first(),
-    ).toHaveAttribute('href', '/teklif-al')
+    ).toHaveAttribute('href', '/iletisim')
     await page.goto(`${origin}/modeller/${prefix}-model-8`)
     await expect(page.locator('.corporate-cover-empty')).toBeVisible()
     await expect(page.locator('.corporate-model-type')).toHaveCount(0)

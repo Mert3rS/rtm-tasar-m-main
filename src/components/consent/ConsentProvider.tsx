@@ -23,7 +23,6 @@ import {
 import type { ConsentChoices, ConsentSource } from '@/lib/consent/cookie'
 import type { ConsentCategory } from '@/lib/consent/registry'
 import { ConsentCard, type ConsentView } from './ConsentCard'
-import { ConsentIcon } from './ConsentIcon'
 
 export type ConsentPolicy = {
   ready: boolean
@@ -206,22 +205,6 @@ export function ConsentProvider({
           onDecide={decide}
           onDismiss={closeCard}
         />
-      ) : null}
-      {snapshot.decided ? (
-        // Stays mounted (hidden while the card is open) so focus can return to it.
-        <button
-          type="button"
-          className="consent-reopen"
-          hidden={cardVisible}
-          aria-label="Çerez tercihleri"
-          aria-describedby="consent-reopen-tip"
-          onClick={() => openConsentPreferences()}
-        >
-          <ConsentIcon className="consent-reopen-icon" />
-          <span className="consent-tooltip" role="tooltip" id="consent-reopen-tip">
-            Çerez tercihleri
-          </span>
-        </button>
       ) : null}
       <p className="consent-toast" role="status" aria-live="polite" data-visible={announcement ? 'true' : 'false'}>
         {announcement ? (

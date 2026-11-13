@@ -13,9 +13,9 @@ test.beforeEach(async ({ page }) => {
 })
 
 async function expectAtlasOrEmpty(page: import('@playwright/test').Page) {
-  const map = page.locator('.featured-dotted-world')
-  if (await map.count()) {
-    await expect(map).toBeVisible()
+  const atlas = page.locator('.featured-atlas-layout')
+  if (await atlas.count()) {
+    await expect(page.locator('.featured-atlas-globe-stage')).toBeVisible()
     return true
   }
   await expect(page.locator('.featured-atlas-empty')).toContainText(
@@ -31,48 +31,145 @@ async function instantScroll(page: import('@playwright/test').Page, multiple: nu
   )
 }
 
-test('supplied spotlight starts at its centre image and reveals the gallery and text on scroll', async ({
+test('cinematic hero scrubs forward and backward, reveals chapters and continues in normal flow', async ({
   page,
 }, testInfo) => {
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto(origin)
-  const hero = page.locator('.spotlight-scroll')
+  const hero = page.locator('.cinematic-hero')
+  const canvas = hero.locator('canvas')
   await expect(hero).toHaveAttribute('data-enhanced', 'true')
-  await expect(page.locator('.site-header')).toBeVisible()
-  await expect(page.locator('.hero-spotlight-item')).toHaveCount(9)
-  await expect(page.locator('h1')).toHaveAttribute('aria-label', /Bir mekânın hissini/)
-  if (
-    await page
-      .locator('.hero-spotlight-col:nth-child(2) .hero-spotlight-item:nth-child(2) img')
-      .count()
+  await expect(hero).toHaveAttribute('data-canvas-ready', 'true')
+  await expect(hero).toHaveAttribute('data-loading', 'false')
+  await expect(page.locator('.site-header')).toHaveAttribute('data-over-hero', 'true')
+  await expect(hero.locator('h1')).toBeVisible()
+  await expect(hero.locator('.cinematic-finale')).toHaveAttribute('inert', '')
+  const originalCanvas = await canvas.elementHandle()
+  await page.locator('.theme-toggle').click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
+  expect(await canvas.evaluate((element, original) => element === original, originalCanvas)).toBe(
+    true,
   )
-    await page.waitForFunction(() => {
-      const image = document.querySelector<HTMLImageElement>(
-        '.hero-spotlight-col:nth-child(2) .hero-spotlight-item:nth-child(2) img',
-      )
-      return image?.complete && image.naturalWidth > 0
-    })
-  else await expect(page.locator('.hero-spotlight-item .spotlight-empty')).toHaveCount(9)
-  expect(
-    await page
-      .locator('.hero-spotlight-gallery')
-      .evaluate((element) => new DOMMatrix(getComputedStyle(element).transform).a),
-  ).toBeCloseTo(1)
-  await page.screenshot({ path: testInfo.outputPath('spotlight-start.png') })
-  await instantScroll(page, 1.35)
-  await page.waitForFunction(() =>
-    document
-      .querySelector<HTMLElement>('.hero-spotlight-gallery')
-      ?.style.transform.includes('scale(0.5)'),
-  )
-  await expect(page.locator('.spotlight-cta')).toHaveCSS('opacity', '1')
-  await expect(page.locator('.spotlight-logo')).toBeVisible()
-  await expect(page.locator('.spotlight-overlay')).toHaveCSS('opacity', '0')
-  await page.screenshot({ path: testInfo.outputPath('spotlight-gallery.png') })
-  await expect(page.locator('.hero-spotlight-gallery canvas')).toHaveCount(0)
+  await page.locator('.theme-toggle').click()
+  await page.screenshot({ path: testInfo.outputPath('cinematic-start.png') })
+  for (const [progress, chapter] of [
+    [0.32, 0],
+    [0.54, 1],
+    [0.76, 2],
+  ] as const) {
+    await hero.evaluate((element, progress) => {
+      if (!(element instanceof HTMLElement)) throw new Error('Expected an HTML hero section')
+      window.scrollTo({
+        top: element.offsetTop + (element.offsetHeight - innerHeight) * progress,
+        behavior: 'instant',
+      })
+    }, progress)
+    await expect
+      .poll(async () => Number(await canvas.getAttribute('data-frame')))
+      .toBeCloseTo(Math.round(progress * 149), 0)
+    await expect(hero.locator('.cinematic-chapter').nth(chapter)).toHaveCSS('opacity', '1')
+    await expect(hero.locator('.cinematic-stage')).toHaveCSS('position', 'sticky')
+    expect(
+      await hero.locator('.cinematic-stage').evaluate((e) => e.getBoundingClientRect().top),
+    ).toBe(0)
+  }
+  await instantScroll(page, 3.98)
+  await expect(hero.locator('.cinematic-finale')).toHaveCSS('opacity', '1')
+  await expect(hero.locator('.cinematic-intro')).toHaveAttribute('inert', '')
+  await page.screenshot({ path: testInfo.outputPath('cinematic-finale.png') })
+  await instantScroll(page, 0)
+  await expect.poll(async () => Number(await canvas.getAttribute('data-frame'))).toBe(0)
+  await expect(hero.locator('.cinematic-intro')).toHaveCSS('opacity', '1')
+  await expect(hero.locator('.cinematic-finale')).toHaveAttribute('inert', '')
+  await hero.locator('.cinematic-scroll-cue').click()
+  await expect(page.locator('.site-header')).toHaveAttribute('data-over-hero', 'false')
   expect(errors).toEqual([])
+})
+
+for (const width of [1440, 390]) {
+  test(`homepage refresh returns to the first animation frame at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto(origin)
+    const hero = page.locator('.cinematic-hero')
+    await expect(hero).toHaveAttribute('data-canvas-ready', 'true')
+    for (const position of [2, 6]) {
+      await instantScroll(page, position)
+      await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(900)
+      await page.reload()
+      await expect(hero).toHaveAttribute('data-loading', 'false')
+      await expect.poll(() => page.evaluate(() => scrollY)).toBe(0)
+      await expect(hero.locator('canvas')).toHaveAttribute('data-frame', '0')
+      await expect(hero.locator('.cinematic-intro')).toHaveCSS('opacity', '1')
+      await expect(page.locator('.site-header')).toHaveAttribute('data-over-hero', 'true')
+    }
+    if (width === 1440) {
+      await expect(page.locator('.desktop-nav a').first()).toHaveCSS('color', 'rgb(16, 55, 97)')
+    } else {
+      await page.getByRole('button', { name: 'Menüyü aç' }).click()
+      await expect(page.locator('.mobile-nav > a').first()).toHaveCSS('color', 'rgb(16, 55, 97)')
+      await page.getByRole('button', { name: 'Menüyü kapat' }).click()
+    }
+    await expect(page.locator('.header-actions .header-project-link')).toHaveCSS(
+      'background-color',
+      'rgb(16, 55, 97)',
+    )
+    // Anchor navigation still advances the story after refreshing.
+    await hero.locator('.cinematic-scroll-cue').click()
+    await expect(page.locator('.site-header')).toHaveAttribute('data-over-hero', 'false')
+    // Refresh also starts at the top when the story's anchor remains in the URL.
+    await page.reload()
+    await expect(hero).toHaveAttribute('data-loading', 'false')
+    await expect.poll(() => page.evaluate(() => scrollY)).toBe(0)
+    await expect(hero.locator('canvas')).toHaveAttribute('data-frame', '0')
+  })
+}
+
+test('missing film frames retain a usable poster fallback and normal navigation', async ({
+  page,
+}) => {
+  const errors: string[] = []
+  const warnings: string[] = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  page.on('console', (message) => {
+    if (message.type() === 'warning') warnings.push(message.text())
+  })
+  await page.route('**/assets/home/cinematic/**', (route) =>
+    route.fulfill({ status: 404, body: '' }),
+  )
+  await page.goto(origin)
+  const hero = page.locator('.cinematic-hero')
+  await expect(hero).toHaveAttribute('data-loading', 'false')
+  await expect(hero).not.toHaveAttribute('data-canvas-ready', 'true')
+  await expect(hero.locator('h1')).toBeVisible()
+  await expect(hero.locator('.cinematic-intro .cinematic-button')).toHaveAttribute(
+    'href',
+    '/iletisim',
+  )
+  expect(warnings.filter((warning) => warning.includes('[RTM hero]'))).toHaveLength(1)
+  expect(errors).toEqual([])
+})
+
+test('canvas unavailable leaves a static, accessible opening with working links', async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const original = HTMLCanvasElement.prototype.getContext
+    Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+      value: function (this: HTMLCanvasElement, ...args: Parameters<typeof original>) {
+        if (this.classList.contains('cinematic-canvas')) return null
+        return original.apply(this, args)
+      },
+    })
+  })
+  await page.goto(origin)
+  await expect(page.locator('.cinematic-hero')).not.toHaveAttribute('data-enhanced', 'true')
+  await expect(page.locator('.cinematic-intro h1')).toBeVisible()
+  await expect(page.locator('.cinematic-intro .cinematic-text-link')).toHaveAttribute(
+    'href',
+    '/projeler',
+  )
 })
 
 test('featured atlas rotates projects, pauses on request and retains its state across themes', async ({
@@ -83,18 +180,19 @@ test('featured atlas rotates projects, pauses on request and retains its state a
   page.on('pageerror', (error) => errors.push(error.message))
   await page.goto(origin)
   await page.locator('#one-cikan').scrollIntoViewIfNeeded()
-  const map = page.locator('.featured-dotted-world')
+  const map = page.locator('.featured-atlas-globe-stage .globe-canvas')
   const populated = await expectAtlasOrEmpty(page)
+  if (populated) await expect(map).toBeVisible()
   const originalMap = populated ? await map.elementHandle() : null
-  await expect(page.locator('.featured-atlas canvas')).toHaveCount(0)
+  await expect(page.locator('.featured-atlas canvas')).toHaveCount(populated ? 1 : 0)
   const card = page.locator('.atlas-project-card')
   if (await card.count()) {
     const title = await card.locator('h3').textContent()
     const slides = await page.locator('.featured-atlas-city-list button').count()
     if (slides > 1) {
       await card.hover()
-      await expect(card.locator('h3')).not.toHaveText(title || '', { timeout: 3500 })
-      await expect(page.locator('.featured-map-marker.is-active .featured-map-badge')).toBeVisible()
+      await expect(card.locator('h3')).not.toHaveText(title || '', { timeout: 7500 })
+      await expect(page.locator('.atlas-globe-location.is-active')).toBeVisible()
       await page.emulateMedia({ reducedMotion: 'reduce' })
       const pausedTitle = await card.locator('h3').textContent()
       await page.waitForTimeout(2200)
@@ -119,15 +217,33 @@ test('featured atlas rotates projects, pauses on request and retains its state a
 test('featured atlas points and city chips work with keyboard', async ({ page }) => {
   await page.goto(origin)
   await page.locator('#one-cikan').scrollIntoViewIfNeeded()
-  const marker = page.locator('.featured-dotted-world [role="button"]').first()
-  if (!(await marker.count())) return
+  if (!(await expectAtlasOrEmpty(page))) return
+  const marker = page.locator('.atlas-globe-location').first()
+  await marker.waitFor({ state: 'visible' })
+  await expect(page.locator('.atlas-globe-location')).toHaveCount(1)
+  await expect(page.locator('.atlas-globe-location-label')).toHaveCount(0)
   await marker.focus()
   await page.keyboard.press('Enter')
   await expect(marker).toHaveAttribute('aria-pressed', 'true')
   await expect(page.locator('.atlas-project-card')).toBeVisible()
-  const city = page.locator('.featured-atlas-city-list button').first()
-  await city.click()
-  await expect(city).toHaveAttribute('aria-pressed', 'true')
+  const city = page.locator('.featured-atlas-city-list button[aria-pressed="false"]').first()
+  if (await city.count()) {
+    const cityName = (await city.textContent())?.trim() || ''
+    await city.click()
+    await expect(page.locator('.featured-atlas .globe-canvas')).toHaveAttribute(
+      'data-atlas-route',
+      /.+-.+/,
+    )
+    await expect(page.locator('.atlas-globe-location')).toHaveCount(0)
+    await expect(page.locator('.atlas-globe-location')).toHaveCount(1, { timeout: 3000 })
+    await expect(page.locator('.atlas-globe-location')).toHaveAttribute(
+      'aria-label',
+      new RegExp(cityName, 'i'),
+    )
+    await expect(
+      page.locator('.featured-atlas-city-list button', { hasText: cityName }),
+    ).toHaveAttribute('aria-pressed', 'true')
+  }
 })
 
 test('service copy and line study advance automatically and can be paused', async ({ page }) => {
@@ -147,11 +263,14 @@ test('service copy and line study advance automatically and can be paused', asyn
 })
 
 for (const width of [1440, 1024, 768, 390, 320]) {
-  test(`spotlight, page layout and atlas fit at ${width}px`, async ({ page }, testInfo) => {
+  test(`cinematic hero, page layout and atlas fit at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 })
     await page.goto(origin)
-    await instantScroll(page, 1.35)
-    await expect(page.locator('.spotlight-cta')).toHaveCSS('opacity', '1')
+    await expect(page.locator('.cinematic-intro')).toHaveCSS('opacity', '1')
+    await expect(page.locator('.cinematic-poster img')).toHaveJSProperty(
+      'currentSrc',
+      `${origin}/assets/home/cinematic/${width < 768 ? 'mobile' : 'desktop'}/frame_0001.webp`,
+    )
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)
     await page.locator('#one-cikan').scrollIntoViewIfNeeded()
     const populated = await expectAtlasOrEmpty(page)
@@ -181,9 +300,16 @@ test('system reduced motion exposes a static hero and service selection still wo
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto(origin)
   await expect(page.locator('.home-experience')).toHaveAttribute('data-motion', 'off')
-  await expect(page.locator('.spotlight-scroll')).not.toHaveAttribute('data-enhanced', 'true')
-  await expect(page.locator('.spotlight-cta')).toHaveCSS('opacity', '1')
-  await expect(page.locator('.spotlight-header h1')).toBeVisible()
+  await expect(page.locator('.cinematic-hero')).not.toHaveAttribute('data-enhanced', 'true')
+  await expect(page.locator('.cinematic-intro')).toHaveCSS('opacity', '1')
+  await expect(page.locator('.cinematic-intro h1')).toBeVisible()
+  await expect(page.locator('.cinematic-poster img')).toHaveJSProperty(
+    'currentSrc',
+    `${origin}/assets/home/cinematic/desktop/frame_0150.webp`,
+  )
+  expect(await page.locator('.cinematic-hero').evaluate((hero) => hero.clientHeight)).toBe(
+    await page.evaluate(() => innerHeight),
+  )
   const next = page.getByRole('button', { name: 'Sonraki hizmet' })
   if (await next.count()) {
     const before = await page.locator('.service-showcase-copy h3').textContent()
@@ -192,9 +318,9 @@ test('system reduced motion exposes a static hero and service selection still wo
   }
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await expect(page.locator('.home-experience')).toHaveAttribute('data-motion', 'off')
-  await expect(page.locator('.spotlight-scroll')).not.toHaveAttribute('data-enhanced', 'true')
+  await expect(page.locator('.cinematic-hero')).not.toHaveAttribute('data-enhanced', 'true')
   await page.emulateMedia({ reducedMotion: 'no-preference' })
-  await expect(page.locator('.spotlight-scroll')).toHaveAttribute('data-enhanced', 'true')
+  await expect(page.locator('.cinematic-hero')).toHaveAttribute('data-enhanced', 'true')
 })
 
 test('public archives, details, gallery, corporate and contact pages use the new design', async ({
@@ -210,7 +336,6 @@ test('public archives, details, gallery, corporate and contact pages use the new
     '/showroom',
     '/hakkimizda',
     '/iletisim',
-    '/teklif-al',
   ]) {
     const response = await page.goto(origin + path)
     expect(response?.status()).toBe(200)
@@ -247,19 +372,27 @@ test('design configurator uses the shared header and keeps independent design co
   await expect(page.locator('.configurator-shell')).toHaveCount(1)
   await expect(page.locator('.configurator-shell .public-site')).toHaveCount(0)
   await expect(page.locator('.site-header')).toHaveCount(1)
-  await expect(page.locator('.design-studio')).toHaveCSS(
-    'background-color',
-    await page
-      .locator('.site-header')
-      .evaluate((element) => getComputedStyle(element).backgroundColor),
-  )
+  // Studio surfaces, actions and toolbar sizes follow their own configured theme tokens.
+  const studioTheme = await page.locator('.design-studio').evaluate((element) => {
+    const probe = document.createElement('span')
+    probe.hidden = true
+    element.append(probe)
+    probe.style.backgroundColor = 'var(--studio-ui-bg)'
+    const background = getComputedStyle(probe).backgroundColor
+    probe.style.backgroundColor = 'var(--studio-ui-button)'
+    const button = getComputedStyle(probe).backgroundColor
+    const toolbarHeight = getComputedStyle(element)
+      .getPropertyValue('--studio-toolbar-height')
+      .trim()
+    probe.remove()
+    return { background, button, toolbarHeight }
+  })
+  await expect(page.locator('.design-studio')).toHaveCSS('background-color', studioTheme.background)
   await expect(page.getByRole('toolbar', { name: 'Tasarım araçları' })).toBeVisible()
-  await expect(page.locator('.dc-stepbar')).toHaveCSS('height', '52px')
+  await expect(page.locator('.dc-stepbar')).toHaveCSS('height', studioTheme.toolbarHeight)
   await expect(page.locator('.dc-primary').first()).toHaveCSS(
     'background-color',
-    await page
-      .locator('.header-project-link')
-      .evaluate((element) => getComputedStyle(element).backgroundColor),
+    studioTheme.button,
   )
   const font = await page
     .locator('.design-studio')
@@ -290,7 +423,7 @@ test('featured atlas remains usable with WebGL unavailable and theme storage blo
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
 })
 
-test('header keeps its appearance with a compact height only on the configurator', async ({
+test('header preserves public navigation with a cinematic home treatment and compact configurator', async ({
   page,
 }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
@@ -303,14 +436,13 @@ test('header keeps its appearance with a compact height only on the configurator
     '/hakkimizda',
     '/iletisim',
     '/showroom',
-    '/teklif-al',
     '/tasarim-olustur',
   ]) {
     await page.goto(origin + route)
     const header = page.locator('.site-header')
     await expect(header).toHaveCount(1)
     if (route === '/') {
-      await expect(page.locator('.spotlight-scroll')).toHaveAttribute('data-enhanced', 'true')
+      await expect(page.locator('.cinematic-hero')).toHaveAttribute('data-enhanced', 'true')
       await expect(header).toBeVisible()
       await instantScroll(page, 1.15)
       await expect(header).toBeVisible()
@@ -332,11 +464,13 @@ test('header keeps its appearance with a compact height only on the configurator
         font: style.fontFamily,
       })
     })
-    if (!baseline) baseline = appearance
-    expect(appearance).toBe(baseline)
+    if (route !== '/' && route !== '/tasarim-olustur') {
+      if (!baseline) baseline = appearance
+      expect(appearance).toBe(baseline)
+    }
     await expect(header.locator('.header-inner')).toHaveCSS(
       'height',
-      route === '/tasarim-olustur' ? '56px' : '92px',
+      route === '/tasarim-olustur' ? '64px' : '92px',
     )
     if (route === '/') {
       await instantScroll(page, 1.35)

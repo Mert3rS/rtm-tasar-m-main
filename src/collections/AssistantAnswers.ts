@@ -75,7 +75,7 @@ export const AssistantAnswers: CollectionConfig = {
           label: 'Site içi adres',
           admin: {
             condition: (_, sibling) => sibling?.kind === 'route',
-            description: 'Örn. /teklif-al, /modeller?kategori=mutfak. Haricî adres kabul edilmez.',
+            description: 'Örn. /iletisim, /modeller?kategori=mutfak. Haricî adres kabul edilmez.',
           },
           validate: (value: string | null | undefined, { siblingData }: { siblingData: unknown }) => {
             const kind =

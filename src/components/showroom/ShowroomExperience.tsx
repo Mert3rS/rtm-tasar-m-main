@@ -1,5 +1,6 @@
 'use client'
 
+import { EditableRegion } from '@/components/site/EditableRegion'
 import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -88,7 +89,7 @@ export function ShowroomExperience({ scenes }: { scenes: TourScene[] }) {
 
   return (
     <section aria-label="İnteraktif showroom" className="tour-experience">
-      <div className="tour-stage">
+      <EditableRegion as="div" className="tour-stage" data-rtm-edit={`showroom-scenes:${active.id}`} data-rtm-field="panoramaImage" data-rtm-label={`${active.title} · 360° panorama ve sahne açıklaması`}>
         <PanoramaViewer
           scenes={scenes}
           activeId={activeId}
@@ -240,7 +241,7 @@ export function ShowroomExperience({ scenes }: { scenes: TourScene[] }) {
             ) : null}
           </div>
         </div>
-      </div>
+      </EditableRegion>
       {fullscreenError ? (
         <p className="tour-fullscreen-error" role="status">
           {fullscreenError}
@@ -273,6 +274,9 @@ export function ShowroomExperience({ scenes }: { scenes: TourScene[] }) {
                       className="object-cover"
                       sizes="110px"
                       src={scene.thumbnail.url}
+                      data-rtm-edit={`showroom-scenes:${scene.id}`}
+                      data-rtm-field="thumbnailImage"
+                      data-rtm-label={`${scene.title} · Küçük önizleme`}
                     />
                   ) : (
                     <span aria-hidden="true">360°</span>

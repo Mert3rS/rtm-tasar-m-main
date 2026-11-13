@@ -62,6 +62,7 @@ export function validateInquiry(
   const input: Record<string, unknown> = Object.fromEntries(Object.entries(value))
   const allowed = new Set([
     'inquiryType',
+    'projectContact',
     'fullName',
     'email',
     'phone',
@@ -144,14 +145,26 @@ export function validateInquiry(
   }
   const inquiryType = input.inquiryType === 'quote' ? 'quote' : 'contact'
   if (!['contact', 'quote'].includes(String(input.inquiryType))) errors.form = 'Form türü geçersiz.'
+  const projectContact = input.projectContact === true && inquiryType === 'contact'
+  if (input.projectContact !== undefined && !projectContact)
+    errors.form = 'İletişim formu türü geçersiz.'
   const fullName = text('fullName', 120, 2)
   const email = text('email', 254, designQuote ? 0 : 3).toLowerCase()
   if ((!designQuote || email) && !validEmail(email))
     errors.email = 'Geçerli bir e-posta adresi girin.'
-  const phone = text('phone', 35, inquiryType === 'quote' ? 7 : 0)
+  const phone = text('phone', 35, inquiryType === 'quote' || projectContact ? 7 : 0)
   if (phone && !phoneHref(phone)) errors.phone = 'Geçerli bir telefon numarası girin.'
-  const subject = inquiryType === 'contact' ? text('subject', 160, 3) : 'Proje teklif talebi'
-  const message = text('message', designQuote ? 2000 : 5000, designQuote ? 0 : 10, true)
+  const subject = projectContact
+    ? 'Proje başvurusu'
+    : inquiryType === 'contact'
+      ? text('subject', 160, 3)
+      : 'Proje teklif talebi'
+  const message = text(
+    'message',
+    designQuote ? 2000 : projectContact ? 500 : 5000,
+    designQuote ? 0 : 10,
+    true,
+  )
   let projectCategory: number | undefined
   let projectCity: string | undefined
   let estimatedArea: number | undefined

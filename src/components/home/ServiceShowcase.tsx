@@ -1,85 +1,90 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import type { CSSProperties } from 'react'
+import { EditableRegion } from '@/components/site/EditableRegion'
+import Image from 'next/image'
 import Link from 'next/link'
-import type { CatalogCardData } from '@/types/catalog'
+import { useEffect, useRef, useState } from 'react'
 import { catalogHref } from '@/lib/catalogQuery'
+import type { CatalogCardData } from '@/types/catalog'
 import { useHomeMotion } from './HomeMotion'
 
-const drawings = [
-  [
-    'M62 296 206 94l154 62 98 182H108Z',
-    'M206 94v202M360 156v140M108 338l98-42 252 42',
-    'M238 149h86v92h-86zM127 279h55v59',
-    'M86 363h397M108 378h350',
-  ],
-  [
-    'M76 102h398v252H76z',
-    'M76 192h398M214 102v252M356 192v162',
-    'M106 132h79v34h-79zM244 221h82v104h-82z',
-    'M386 223h58v58h-58zM386 297h58v28h-58z',
-    'M55 83h440M55 372h440',
-  ],
-  [
-    'M74 330 201 119h187l96 211Z',
-    'M201 119 74 330M388 119l96 211M201 119l94 211M388 119 295 330',
-    'M146 330v-79h91v79M352 330v-126h72v126',
-    'M98 350h362M122 369h314',
-    'M166 205h55M331 175h71',
-  ],
-  [
-    'M70 120h410v224H70z',
-    'M107 152h154v160H107zM287 152h155v72H287zM287 246h72v66h-72zM378 246h64v66h-64z',
-    'M107 232h154M184 152v160',
-    'M54 102h442M54 362h442',
-    'M92 383h365',
-  ],
-]
+const flowPhases = ['01 / Eskiz', '02 / Gövde', '03 / Detay', '04 / Malzeme', '05 / Mekân']
 
-const surfaces = [
-  'M108 338 206 94l154 62 98 182Z',
-  'M76 102h398v252H76Z',
-  'M74 330 201 119h187l96 211Z',
-  'M70 120h410v224H70Z',
-]
+const serviceReels: Record<string, string> = {
+  'sunum-ic-mimari': '/assets/home/service-reels/sunum-ic-mimari.webm',
+  'sunum-malzeme-uygulama': '/assets/home/service-reels/sunum-malzeme-uygulama.webm',
+  'sunum-ozel-mobilya': '/assets/home/service-reels/sunum-ozel-mobilya.webm',
+  'sunum-proje-danismanligi': '/assets/home/service-reels/sunum-proje-danismanligi.webm',
+}
 
-type LineStyle = CSSProperties & { '--line-index': number }
+function ServiceFlowReel({
+  motion,
+  playing,
+  service,
+}: {
+  motion: boolean
+  playing: boolean
+  service: CatalogCardData
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const videoSource = serviceReels[service.slug]
 
-function LineStudy({ variant }: { variant: number }) {
-  const paths = drawings[variant % drawings.length]
+  useEffect(() => {
+    const video = videoRef.current
+    if (!video) return
+
+    if (motion && playing) {
+      video.currentTime = 0
+      void video.play().catch(() => undefined)
+    } else {
+      video.pause()
+    }
+  }, [motion, playing, videoSource])
+
   return (
-    <svg viewBox="0 0 540 430" aria-hidden="true" className="service-line-study">
-      <g className="line-study-grid">
-        {Array.from({ length: 9 }, (_, index) => (
-          <path key={`v-${index}`} d={`M${55 + index * 54} 65v320`} />
-        ))}
-        {Array.from({ length: 7 }, (_, index) => (
-          <path key={`h-${index}`} d={`M55 ${65 + index * 54}h430`} />
-        ))}
-      </g>
-      <path className="line-study-surface" d={surfaces[variant % surfaces.length]} />
-      <g className="line-study-construction">
-        <circle cx="270" cy="222" r="151" />
-        <path d="M57 222h426M270 65v320M91 92l358 276M449 92 91 368" />
-      </g>
-      <g className="line-study-rough">
-        {paths.map((path) => <path key={`rough-${path}`} d={path} />)}
-      </g>
-      <g className="line-study-drawing">
-        {paths.map((path, index) => {
-          const style: LineStyle = { '--line-index': index }
-          return <path key={path} d={path} pathLength={1} style={style} />
-        })}
-      </g>
-      <g className="line-study-measures">
-        <path d="M70 395h410M70 388v14M480 388v14" />
-        <path d="M36 82v276M29 82h14M29 358h14" />
-        <text x="244" y="418">RTM / 01</text>
-        <text x="18" y="235" transform="rotate(-90 18 235)">ÖLÇEK 1:20</text>
-      </g>
-      <circle className="line-study-pencil" cx="0" cy="0" r="4" />
-    </svg>
+    <div
+      className={`service-flow-reel ${motion && playing ? 'is-playing' : 'is-paused'}`}
+      aria-hidden="true"
+    >
+      <div className="service-flow-media">
+        {service.cover ? (
+          <Image
+            src={service.cover.url}
+            alt=""
+            fill
+            sizes="(min-width: 1000px) 58vw, 100vw"
+            className="service-flow-poster"
+          />
+        ) : null}
+        {videoSource ? (
+          <video
+            ref={videoRef}
+            className="service-flow-video"
+            autoPlay={motion && playing}
+            loop
+            muted
+            playsInline
+            poster={service.cover?.url}
+            preload="auto"
+          >
+            <source src={videoSource} type="video/webm" />
+          </video>
+        ) : null}
+      </div>
+      <div className="service-flow-shade" />
+      <div className="service-flow-focus" />
+      <div className="service-flow-bar">
+        <span>RTM / HİZMET VİDEOSU · 03 SN</span>
+        <span className="service-flow-status"><i /> CANLI SÜREÇ</span>
+      </div>
+      <span className="service-flow-time">00:03</span>
+      <span className="service-flow-mark">RTM</span>
+      <div className="service-flow-phases">
+        {flowPhases.map((phase) => <span key={phase}>{phase}</span>)}
+      </div>
+      <div className="service-flow-progress"><i /></div>
+      <span className="service-visual-tag">{service.title}</span>
+    </div>
   )
 }
 
@@ -91,14 +96,16 @@ export function ServiceShowcase({ services }: { services: CatalogCardData[] }) {
 
   useEffect(() => {
     if (!motion || !playing || services.length < 2) return
-    const timer = window.setInterval(
+    const timer = window.setTimeout(
       () => setIndex((currentIndex) => (currentIndex + 1) % services.length),
-      2000,
+      3000,
     )
-    return () => window.clearInterval(timer)
-  }, [motion, playing, services.length])
+    return () => window.clearTimeout(timer)
+  }, [index, motion, playing, services.length])
 
   if (!current) return null
+  const currentHref = catalogHref('service', current.slug)
+
   return (
     <div className="service-showcase service-line-showcase">
       <div className="service-showcase-copy">
@@ -106,13 +113,13 @@ export function ServiceShowcase({ services }: { services: CatalogCardData[] }) {
           {String(index + 1).padStart(2, '0')} / {String(services.length).padStart(2, '0')} —
           ÇALIŞMA ALANIMIZ
         </span>
-        <div key={current.id} className="service-copy-enter">
+        <EditableRegion as="div" key={current.id} className="service-copy-enter" data-rtm-edit={`services:${current.id}`} data-rtm-label={`${current.title} · Hizmet metinleri`}>
           <h3>{current.title}</h3>
           <p>{current.shortDescription}</p>
-          <Link className="workshop-link" href={catalogHref('service', current.slug)}>
+          <Link className="workshop-link" href={currentHref}>
             Hizmeti incele <span aria-hidden="true">↗</span>
           </Link>
-        </div>
+        </EditableRegion>
         <div className="service-showcase-navigation" role="group" aria-label="Hizmet seçimi">
           <button
             type="button"
@@ -154,13 +161,17 @@ export function ServiceShowcase({ services }: { services: CatalogCardData[] }) {
           ) : null}
         </div>
       </div>
-      <div className="service-showcase-visual" aria-hidden="true">
-        <div className="service-line-slide" key={current.id}>
-          <LineStudy variant={index} />
-          <span className="service-sketch-note">ÇİZGİ / MEKÂN / DETAY</span>
+      <Link
+        aria-label={`${current.title} hizmetini incele`}
+        className="service-showcase-visual"
+        data-rtm-edit={`services:${current.id}`} data-rtm-label={`${current.title} · Kapak görseli`}
+        data-rtm-field="coverImage"
+        href={currentHref}
+      >
+        <div className="service-line-slide" key={`${current.id}-${playing ? 'playing' : 'paused'}`}>
+          <ServiceFlowReel motion={motion} playing={playing} service={current} />
         </div>
-        <span className="service-visual-tag">{current.title}</span>
-      </div>
+      </Link>
     </div>
   )
 }

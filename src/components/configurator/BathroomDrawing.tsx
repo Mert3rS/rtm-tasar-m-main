@@ -20,9 +20,9 @@ export function BathroomDrawing({
   if (!b) return null
   const scale = Math.min(540 / g.totalWidth, 495 / Math.max(g.top, human ? 180 : 0)),
     ps = Math.min(285 / g.totalWidth, 220 / c.d.d),
-    x = 125,
+    x = 125 + (-g.left - c.d.w / 2) * scale,
     floor = 650,
-    px = 835,
+    px = 835 + (-g.left - c.d.w / 2) * ps,
     py = 150
   const ink = 'var(--studio-text)',
     muted = 'var(--studio-muted)',
@@ -46,14 +46,14 @@ export function BathroomDrawing({
         <text x={px} y="75" letterSpacing="2">
           TEZGÂH / LAVABO PLANI
         </text>
-        {[...g.lower, ...(b.upperEnabled ? g.upper : [])].map((unit) => {
+        {[...g.lower, ...(b.upperEnabled ? g.upper : []), ...g.side].map((unit) => {
           const ux = x + (unit.x + c.d.w / 2 - unit.width / 2) * scale,
             uy = floor - (unit.bottom + unit.height) * scale,
             uw = unit.width * scale,
             uh = unit.height * scale,
             upper = unit.row === 'upper'
           const drawers =
-            !upper &&
+            unit.row !== 'upper' &&
             (unit.kind === 'drawers' || (unit.kind === 'sink' && b.sinkFront === 'drawers'))
           const active = selection?.row === unit.row && selection.index === unit.index
           return (
@@ -69,7 +69,7 @@ export function BathroomDrawing({
                 role={onSelect ? 'button' : undefined}
                 aria-label={
                   onSelect
-                    ? `${upper ? 'Üst' : 'Alt'} ${unit.index + 1}. banyo bölmesi, ${unit.width} cm, ${bathroomKindNames[unit.kind]}`
+                    ? `${unit.row === 'side' ? 'Boy dolabı' : upper ? 'Üst' : 'Alt'} ${unit.index + 1}. banyo bölmesi, ${unit.width} cm, ${bathroomKindNames[unit.kind]}`
                     : undefined
                 }
                 onClick={() => onSelect?.({ row: unit.row, index: unit.index })}
@@ -169,18 +169,10 @@ export function BathroomDrawing({
             })
           : null}
         {g.sideCabinet ? (
-          <g aria-label="Sağ boy dolabı">
-            <rect x={x + (g.sideCabinet.x + c.d.w / 2 - g.sideCabinet.width / 2) * scale}
-              y={floor - (g.sideCabinet.bottom + g.sideCabinet.height) * scale}
-              width={g.sideCabinet.width * scale} height={g.sideCabinet.height * scale}
-              fill={surface} stroke={ink} />
-            <text x={x + (g.sideCabinet.x + c.d.w / 2) * scale}
-              y={floor - (g.sideCabinet.bottom + g.sideCabinet.height / 2) * scale} textAnchor="middle">
-              Boy dolabı
-            </text>
+          <g aria-label={b.sideCabinet?.side === 'left' ? 'Sol boy dolabı' : 'Sağ boy dolabı'}>
             <text x={x + (g.sideCabinet.x + c.d.w / 2) * scale}
               y={floor - (g.sideCabinet.bottom + g.sideCabinet.height) * scale - 12} textAnchor="middle">
-              {g.sideCabinet.width} × {g.sideCabinet.height} cm
+              Boy dolabı {g.sideCabinet.width} × {g.sideCabinet.height} cm
             </text>
           </g>
         ) : null}
@@ -261,7 +253,7 @@ export function BathroomDrawing({
         <rect x={px} y={py} width={c.d.w * ps} height={c.d.d * ps} fill={surface} stroke={ink} />
         {g.sideCabinet ? <rect
           x={px + (g.sideCabinet.x + c.d.w / 2 - g.sideCabinet.width / 2) * ps}
-          y={py} width={g.sideCabinet.width * ps} height={g.sideCabinet.depth * ps}
+          y={py + (b.sideCabinet?.alignment === 'front' ? c.d.d - g.sideCabinet.depth : 0) * ps} width={g.sideCabinet.width * ps} height={g.sideCabinet.depth * ps}
           fill={surface} stroke={ink} /> : null}
         {g.sinks.map((unit) => {
           const size = bathroomBasinSize(c, unit),
@@ -317,6 +309,11 @@ export function BathroomDrawing({
         <text x={px} y="545">
           {b.splashback ? '24 cm tezgâh arkası panel' : 'Arka panel yok'}
         </text>
+        {g.sideCabinet ? <>
+          <text x="835" y="575">Boy: {g.sideCabinet.width} × {g.sideCabinet.height} × {g.sideCabinet.depth} cm</text>
+          <text x="835" y="600">{b.sideCabinet?.side === 'left' ? 'Solda' : 'Sağda'} · Yerden {g.sideCabinet.bottom} cm · Ara {b.sideCabinet?.gap} cm</text>
+          <text x="835" y="625">{g.side.length} göz · Toplam yerleşim {g.totalWidth} cm</text>
+        </> : null}
         {human ? (
           <g data-human-scale>
             <polygon

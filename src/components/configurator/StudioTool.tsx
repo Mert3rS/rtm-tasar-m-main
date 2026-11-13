@@ -15,7 +15,7 @@ export function StudioTool({
   showLabel?: boolean
 }) {
   const id = useId()
-  const [anchor, setAnchor] = useState<{ left: number; top: number } | null>(null)
+  const [anchor, setAnchor] = useState<{ left: number; top: number; container: Element } | null>(null)
   useEffect(() => {
     if (!anchor) return
     const dismiss = () => setAnchor(null)
@@ -32,7 +32,9 @@ export function StudioTool({
   function reveal(button: HTMLButtonElement) {
     if (showLabel) return
     const bounds = button.getBoundingClientRect()
+    const popover = button.closest<HTMLElement>('[popover]')
     setAnchor({
+      container: popover?.matches(':popover-open') ? popover : document.fullscreenElement ?? document.body,
       left: Math.max(132, Math.min(window.innerWidth - 132, bounds.left + bounds.width / 2)),
       top: bounds.bottom + 8,
     })
@@ -52,7 +54,7 @@ export function StudioTool({
     </button>
     {anchor ? createPortal(
       <span id={id} role="tooltip" className="dc-floating-tooltip"
-        style={{ left: anchor.left, top: anchor.top }}>{label}</span>, document.fullscreenElement ?? document.body,
+        style={{ left: anchor.left, top: anchor.top }}>{label}</span>, anchor.container,
     ) : null}
   </>
 }

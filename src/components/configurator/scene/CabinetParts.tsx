@@ -250,6 +250,7 @@ export function Front({
   localOpen,
   onToggle,
   longHandle = false,
+  handleEdge = 'top',
   slideOffset,
   zOffset = 0,
   plumbingCutout = false,
@@ -271,6 +272,7 @@ export function Front({
   onToggle: () => void
   onHover: (active: boolean) => void
   longHandle?: boolean
+  handleEdge?: 'top' | 'bottom'
   slideOffset?: number
   zOffset?: number
   plumbingCutout?: boolean
@@ -371,6 +373,13 @@ export function Front({
         : Math.min(options.kulp === 'gomme' ? 0.32 : 0.8, h * 0.45)
       : Math.min(0.15, h * 0.45)
     : 0.012
+  const handleY = longHandle && verticalHandle
+    ? 0
+    : options.kulp === 'gola'
+      ? h / 2 - 0.018
+      : verticalHandle
+        ? Math.min(h / 2 - 0.05, h / 2 - handleLength / 2 - 0.02)
+        : h / 2 - 0.05
   return (
     <group ref={ref} position={[x - w / 2, y, frontZ]}>
       <mesh
@@ -485,7 +494,10 @@ export function Front({
         />
       ) : null}
       {options.kulp === 'dugme' ? (
-        <mesh position={[w - 0.045, 0, 0.04]} rotation={[Math.PI / 2, 0, 0]}>
+        <mesh
+          position={[w - 0.045, handleEdge === 'bottom' ? -h / 2 + 0.05 : 0, 0.04]}
+          rotation={[Math.PI / 2, 0, 0]}
+        >
           <cylinderGeometry args={[0.013, 0.009, 0.024, 12]} />
           <meshStandardMaterial color={handleColor} metalness={0.7} roughness={0.35} />
         </mesh>
@@ -494,13 +506,7 @@ export function Front({
         <mesh
           position={[
             verticalHandle ? w - 0.045 : w / 2,
-            longHandle && verticalHandle
-              ? 0
-              : options.kulp === 'gola'
-                ? h / 2 - 0.018
-                : verticalHandle
-                  ? Math.min(h / 2 - 0.05, h / 2 - handleLength / 2 - 0.02)
-                  : h / 2 - 0.05,
+            handleEdge === 'bottom' ? -handleY : handleY,
             0.036,
           ]}
         >

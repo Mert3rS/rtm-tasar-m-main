@@ -24,51 +24,15 @@ export function validPanorama({
   )
 }
 
-// Exact public Blob store owned by this deployment. Add other origins only with a matching Media adapter.
-const managedMediaOrigins = new Set(['https://1qldjncltmptxwup.public.blob.vercel-storage.com'])
-
-function safeMediaPath(pathname: string) {
-  const segments = pathname.split('/').slice(1)
-  if (!segments.length || segments.some((segment) => !segment)) return false
-
-  try {
-    return segments.every((segment) => {
-      const decoded = decodeURIComponent(segment)
-      return !/[\\/\u0000-\u001f]/.test(decoded) && decoded !== '.' && decoded !== '..'
-    })
-  } catch {
-    return false
-  }
-}
-
-// Accept Payload's local file route and the allowlisted Blob origin only.
+// Only Media-generated local routes are accepted. Future object storage must be explicitly allowlisted here.
 export function managedMediaUrl(value: string | null | undefined) {
-  if (!value || /[\u0000- ]/.test(value)) return undefined
-
-  if (value.startsWith('/api/media/file/')) {
-    if (!/^\/api\/media\/file\/[^/?#\\]+$/.test(value)) return undefined
-    try {
-      const filename = decodeURIComponent(value.slice('/api/media/file/'.length))
-      if (/[\\/\u0000-\u001f]/.test(filename) || filename === '.' || filename === '..')
-        return undefined
-      return value
-    } catch {
-      return undefined
-    }
-  }
-
+  if (!value || !/^\/api\/media\/file\/[^/?#\\]+$/.test(value) || /[\u0000-\u0020]/.test(value))
+    return undefined
   try {
-    const url = new URL(value)
-    if (
-      !managedMediaOrigins.has(url.origin) ||
-      url.username ||
-      url.password ||
-      url.search ||
-      url.hash ||
-      !safeMediaPath(url.pathname)
-    )
+    const filename = decodeURIComponent(value.slice('/api/media/file/'.length))
+    if (/[\\/\u0000-\u001f]/.test(filename) || filename === '.' || filename === '..')
       return undefined
-    return url.href
+    return value
   } catch {
     return undefined
   }

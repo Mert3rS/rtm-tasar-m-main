@@ -4,6 +4,7 @@ import { wardrobeSchema, defaultWardrobe, wardrobeMinimumHeight } from './wardro
 import { entrywaySchema, defaultEntryway, entrywayFitError } from './entrywaySchema'
 import { bathroomSchema, defaultBathroom, bathroomFitError } from './bathroomSchema'
 import { tvUnitSchema, defaultTvUnit, tvFitError } from './tvSchema'
+import { materialSchema, surfaceSchema, ralSchema } from './finishSchema'
 
 const sizes = z.array(z.number().finite().min(5).max(600)).min(1).max(12)
 export const fronts = ['kapak', 'cekmece', 'acik', 'cam', 'klapa', 'ayna'] as const
@@ -81,25 +82,13 @@ export const configSchema = z
       .strict(),
     o: z
       .object({
-        malz: z.enum([
-          'Akrilik',
-          'Lake',
-          'Laminat',
-          'Ahşap kaplama',
-          'MDF boyalı',
-          'MDF-lam',
-          'Glossmax',
-          'High gloss',
-        ]),
-        yuzey: z.enum(['Mat', 'Parlak', 'Süper mat', 'Dokulu']),
+        malz: materialSchema,
+        yuzey: surfaceSchema,
         km: z.enum(['duz', 'cerceveli', 'cizgili', 'fluted']),
         renk: z.string().max(30),
         iki: z.boolean(),
         renk2: z.string().max(30),
-        ral: z
-          .string()
-          .max(12)
-          .regex(/^(?:|(?:RAL\s*)?\d{4}|#[a-fA-F0-9]{6})$/),
+        ral: ralSchema,
         govde: z.enum(['kapak', 'beyaz', 'antrasit', 'ahsap']),
         kulp: z.enum(['gola', 'cubuk', 'gomme', 'bas-ac', 'kenar-profil', 'yok', 'dugme']),
         krenk: z.enum(['beyaz', 'siyah', 'inox', 'altin', 'bronz']),
@@ -231,6 +220,8 @@ export const configSchema = z
       ctx.addIssue({ code: 'custom', message: 'Ölçü toplamları tutarsız.' })
     if (!Object.hasOwn(palette, c.o.renk) || !Object.hasOwn(palette, c.o.renk2))
       ctx.addIssue({ code: 'custom', message: 'Geçersiz renk.' })
+    if (c.bathroom?.sideCabinet?.finish && !Object.hasOwn(palette, c.bathroom.sideCabinet.finish.renk))
+      ctx.addIssue({ code: 'custom', message: 'Geçersiz boy dolabı rengi.' })
     for (const key of ['w', 'h', 'd'] as const) {
       const [min, max] = limits[c.m][key]
       if (c.d[key] < min || c.d[key] > max)

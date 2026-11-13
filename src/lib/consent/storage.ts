@@ -98,6 +98,20 @@ function readCookieRecord() {
   }
 }
 
+/**
+ * Restores the consent-gated theme before React hydrates. Kept in this module so
+ * instrumentation-client never reads cookies or Web Storage directly.
+ */
+export function restoreInitialTheme(policyVersion: string) {
+  if (typeof document === 'undefined') return
+  document.documentElement.dataset.rtmJs = 'true'
+  const { choices } = effectiveConsent(readCookieRecord(), policyVersion)
+  const themeEntry = registryEntry('rtm-theme')
+  if (!choices.functional || themeEntry?.category !== 'functional') return
+  const saved = storageArea('local')?.getItem(themeEntry.name)
+  document.documentElement.dataset.theme = saved === 'dark' ? 'dark' : 'light'
+}
+
 function applyRecord(record: ConsentRecord | null) {
   const { decided, choices } = effectiveConsent(record, snapshot.policyVersion)
   const previous = snapshot

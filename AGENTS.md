@@ -100,7 +100,7 @@ Ana teknoloji yığını: Next.js, React, strict TypeScript, Payload CMS, Payloa
 
 ### İletişim ve başvuru kuralları — Faz 6
 
-- `/iletisim` ve `/teklif-al` mevcut tasarım/tema içinde kalır. Etkileşim `src/components/contact` altında; sayfa metni ve ayar erişimi sunucudadır. Yeni büyük form kütüphanesi eklemeyin.
+- İletişim ve proje başvuruları `/iletisim` altında kalır; eski `/teklif-al` adresi kalıcı olarak buraya yönlenir. Etkileşim `src/components/contact` altında; sayfa metni ve ayar erişimi sunucudadır. Yeni büyük form kütüphanesi eklemeyin.
 - `site-settings` global'ı admin-only okunur/güncellenir. Public `getPublicSiteSettings()` yalnızca açık select/DTO alanlarını trusted Local API ile alır. Bildirim alıcısı veya sunucu sırları browser'a aktarılmaz. SMTP sırlarını CMS'ye koymayın.
 - `inquiries` kişisel veri içerir; public CRUD kapalıdır. Public submission endpoint'i yalnızca doğrulanmış alanlardan yeni başvuru create eder; keyfi collection, update veya korunan alan input'u eklemeyin. `overrideAccess: true` sadece belgelenmiş trusted create/lookup/notification işlemleri içindir.
 - Sunucudaki doğrulamayı client validasyonuyla değiştirmeyin. 24 KiB body limiti stream için de uygulanır. Cookie'ye bağlı imzalı token, exact Origin, honeypot, UUID idempotency ve DB unique index korunmalıdır. Raw HTML, kişisel veri URL/log/analytics/localStorage'a eklenmez.

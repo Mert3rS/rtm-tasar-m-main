@@ -1,3 +1,4 @@
+import { EditableRegion } from '@/components/site/EditableRegion'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowIcon } from '@/components/site/ArrowIcon'
@@ -18,9 +19,11 @@ export function ProjectCard({
   const categoryNames = project.categories.map(({ name }) => name).join(' / ')
 
   return (
-    <article
+    <EditableRegion as="article"
       className={`portfolio-card${archive ? ' portfolio-card--archive' : ''}`}
       data-reveal
+      data-rtm-edit={`projects:${project.id}`} data-rtm-label={`${project.title} · Kapak ve açıklamalar`}
+      data-rtm-field="coverImage"
     >
       <Link
         aria-label={`${project.title} projesini inceleyin`}
@@ -48,9 +51,6 @@ export function ProjectCard({
             <span className="project-index micro-label">
               {String(index + 1).padStart(2, '0')}
             </span>
-            {archive && project.featured ? (
-              <span className="project-featured-label micro-label">Öne çıkan</span>
-            ) : null}
           </div>
           <span aria-hidden="true" className="project-card-arrow">
             <ArrowIcon diagonal />
@@ -86,6 +86,6 @@ export function ProjectCard({
           {categoryNames}
         </p>
       ) : null}
-    </article>
+    </EditableRegion>
   )
 }

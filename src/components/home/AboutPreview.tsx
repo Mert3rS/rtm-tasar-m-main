@@ -67,7 +67,7 @@ export async function AboutPreview() {
           <Link className="text-link" href="/hakkimizda">
             Bizi yakından tanıyın ↗
           </Link>
-          <Link className="text-link mt-8" href="/teklif-al">
+          <Link className="text-link mt-8" href="/iletisim">
             Projenizi Konuşalım
             <ArrowIcon diagonal />
           </Link>

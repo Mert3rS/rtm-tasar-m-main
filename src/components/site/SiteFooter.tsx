@@ -1,34 +1,32 @@
+import { EditableRegion } from '@/components/site/EditableRegion'
 import Link from 'next/link'
-import Image from 'next/image'
 import { getPublicSiteSettings } from '@/lib/siteSettings'
 import { ContactDetails } from '@/components/contact/ContactDetails'
 import { CookiePreferencesButton } from '@/components/consent/CookiePreferencesButton'
+import { BrandLogo } from '@/components/brand/BrandLogo'
+import Image from 'next/image'
 
 export async function SiteFooter() {
   const settings = await getPublicSiteSettings()
   return (
     <footer className="site-footer" id="iletisim">
       <div className="site-shell footer-grid">
-        <div>
-          <Link aria-label="RTM Tasarım ana sayfa" className="wordmark footer-wordmark" href="/">
+        <div data-reveal data-reveal-effect="blur">
+          <Link aria-label={`${settings.companyName} ana sayfa`} className="wordmark footer-wordmark" href="/">
             {settings.logo ? (
               <Image
                 alt={settings.logo.alt}
+                className="brand-logo brand-logo--footer site-uploaded-logo"
+                height={settings.logo.height}
                 src={settings.logo.url}
-                width={160}
-                height={60}
-                className="footer-custom-logo"
+                unoptimized
+                width={settings.logo.width}
               />
             ) : (
-              <>
-                <span className="wordmark-main">
-                  rtm<span className="wordmark-dot">.</span>
-                </span>
-                <span className="wordmark-caption">TASARIM</span>
-              </>
+              <BrandLogo className="brand-logo brand-logo--footer" decorative />
             )}
           </Link>
-          <p className="footer-tagline">
+          <EditableRegion as="p" className="footer-tagline" data-rtm-edit="site-settings" data-rtm-field="companyDescription" data-rtm-label="Footer şirket açıklaması">
             {settings.companyDescription || (
               <>
                 Düşünülmüş mekânlar.
@@ -36,37 +34,42 @@ export async function SiteFooter() {
                 Özenle işlenen detaylar.
               </>
             )}
-          </p>
+          </EditableRegion>
         </div>
-        <nav aria-label="Alt menü">
-          <p className="micro-label mb-5">Keşfedin</p>
-          <Link href="/">Ana Sayfa</Link>
-          <Link href="/projeler">Projeler</Link>
-          <Link href="/modeller">Modeller</Link>
-          <Link href="/hizmetler">Hizmetler</Link>
-          <Link href="/showroom">Showroom</Link>
-          <Link href="/hakkimizda">Hakkımızda</Link>
-          <Link href="/iletisim">İletişim</Link>
-          <Link href="/teklif-al">Teklif Al</Link>
+        <nav aria-label="Alt menü" data-reveal data-reveal-delay="100" data-reveal-effect="blur">
+          <p className="micro-label mb-5">{settings.siteCopy.footerExploreLabel}</p>
+          <Link href="/">{settings.siteCopy.navHome}</Link>
+          <Link href="/projeler">{settings.siteCopy.navProjects}</Link>
+          <Link href="/modeller">{settings.siteCopy.navModels}</Link>
+          <Link href="/hizmetler">{settings.siteCopy.navServices}</Link>
+          <Link href="/showroom">{settings.siteCopy.navShowroom}</Link>
+          <Link href="/iletisim">{settings.siteCopy.navContact}</Link>
         </nav>
-        <div className="footer-contact">
-          <p className="micro-label mb-5">İletişim</p>
-          <p>
-            Yeni bir mekânın
-            <br />
-            ilk adımı, bir konuşma.
-          </p>
-          <ContactDetails settings={settings} compact />
-        </div>
+        <EditableRegion as="div"
+          className="footer-contact"
+          data-rtm-edit="site-settings" data-rtm-label="Footer iletişim ve sosyal medya"
+          data-reveal
+          data-reveal-delay="180"
+          data-reveal-effect="blur"
+        >
+          <p className="micro-label mb-5">{settings.siteCopy.footerContactLabel}</p>
+          <p className="whitespace-pre-line">{settings.siteCopy.footerContactHeading}</p>
+          <ContactDetails settings={settings} compact showIcons />
+        </EditableRegion>
       </div>
-      <div className="site-shell footer-bottom">
+      <div
+        className="site-shell footer-bottom"
+        data-reveal
+        data-reveal-delay="240"
+        data-reveal-effect="blur"
+      >
         <span>
           © {new Date().getFullYear()} {settings.companyName}
         </span>
-        <span>Mobilya · Mekân · Tasarım</span>
+        <span>{settings.siteCopy.footerSignature}</span>
         <span className="footer-legal">
-          <Link href="/cerez-politikasi">Çerez politikası</Link> · <CookiePreferencesButton /> ·{' '}
-          <Link href="/sss">SSS</Link>
+          <Link href="/kvkk-aydinlatma-metni">KVKK aydınlatma metni</Link> ·{' '}
+          <Link href="/cerez-politikasi">Çerez politikası</Link> · <CookiePreferencesButton />
         </span>
         <a
           href="https://www.naturalearthdata.com/about/terms-of-use/"

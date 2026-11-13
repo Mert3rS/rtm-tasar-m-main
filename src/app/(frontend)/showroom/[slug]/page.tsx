@@ -26,7 +26,7 @@ export default async function ShowroomPage({ params }: Props) {
   const showroom = await getShowroomBySlug((await params).slug)
   if (!showroom) notFound()
   return (
-    <main className="showroom-detail-page" id="main-content">
+    <main className="showroom-detail-page" id="main-content" data-rtm-edit={`showrooms:${showroom.id}`} data-rtm-label={`${showroom.title} · Showroom`}>
       <TrackInterest k="showroom" s={showroom.slug} l={showroom.title.slice(0, 80)} />
       <header className="site-shell showroom-detail-heading">
         <Link className="text-link" href="/showroom">
@@ -56,7 +56,7 @@ export default async function ShowroomPage({ params }: Props) {
       </div>
       <section className="site-shell showroom-description-section">
         <div>
-          <Link className="text-link mb-8" href="/teklif-al">
+          <Link className="text-link mb-8" href="/iletisim">
             Bu Tasarım İçin Bilgi Alın ↗
           </Link>
           {showroom.description ? (

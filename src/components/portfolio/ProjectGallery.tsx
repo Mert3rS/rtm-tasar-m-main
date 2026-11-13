@@ -4,17 +4,20 @@ import Image from 'next/image'
 import { useEffect, useId, useRef, useState } from 'react'
 import { TextAnimate } from '@/components/site/TextAnimate'
 import type { ProjectImage } from '@/types/portfolio'
+import { EditableRegion } from '@/components/site/EditableRegion'
 
 export function ProjectGallery({
   images,
   title,
   heading,
   eyebrow = 'Mekândan detaylar',
+  editor,
 }: {
   images: ProjectImage[]
   title: string
   heading?: string
   eyebrow?: string
+  editor?: { target: string; field: string }
 }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null)
   const dialogRef = useRef<HTMLDialogElement>(null)
@@ -47,7 +50,14 @@ export function ProjectGallery({
 
   if (!images.length) return null
   return (
-    <section aria-labelledby="gallery-heading" className="site-shell project-gallery-section">
+    <EditableRegion
+      as="section"
+      aria-labelledby="gallery-heading"
+      className="site-shell project-gallery-section"
+      data-rtm-edit={editor?.target}
+      data-rtm-field={editor?.field}
+      data-rtm-label={`${title} · Fotoğraf albümü`}
+    >
       <div className="section-heading">
         <div>
           <p className="eyebrow">{eyebrow}</p>
@@ -178,6 +188,6 @@ export function ProjectGallery({
           </div>
         </dialog>
       ) : null}
-    </section>
+    </EditableRegion>
   )
 }

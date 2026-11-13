@@ -5,11 +5,13 @@ export function SelectionOutline({
   height,
   position,
   color,
+  ignorePointer = false,
 }: {
   width: number
   height: number
   position: [number, number, number]
   color: string
+  ignorePointer?: boolean
 }) {
   const points = useMemo(
     () =>
@@ -30,7 +32,7 @@ export function SelectionOutline({
     [width, height],
   )
   return (
-    <lineLoop position={position}>
+    <lineLoop position={position} raycast={ignorePointer ? () => undefined : undefined}>
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[points, 3]} />
       </bufferGeometry>

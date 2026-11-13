@@ -6,7 +6,9 @@ import * as migration_20261029_160902_phase7_corporate_catalog from './20261029_
 import * as migration_20261031_203910_phase8_furniture_configurator from './20261031_203910_phase8_furniture_configurator'
 import * as migration_20261105_093608_phase9_10_assistant_consent from './20261105_093608_phase9_10_assistant_consent'
 import * as migration_20261105_215849_phase8_3_design_quote from './20261105_215849_phase8_3_design_quote'
-import * as migration_20261107_144050_vercel_blob_media from './20261107_144050_vercel_blob_media'
+import * as migration_20261109_214356_admin_content_studio from './20261109_214356_admin_content_studio'
+import * as migration_20261110_165225_homepage_hero_photos from './20261110_165225_homepage_hero_photos'
+import * as migration_20261111_182353_admin_delivery_copy from './20261111_182353_admin_delivery_copy'
 
 export const migrations = [
   {
@@ -50,8 +52,18 @@ export const migrations = [
     name: '20261105_215849_phase8_3_design_quote',
   },
   {
-    up: migration_20261107_144050_vercel_blob_media.up,
-    down: migration_20261107_144050_vercel_blob_media.down,
-    name: '20261107_144050_vercel_blob_media',
+    up: migration_20261109_214356_admin_content_studio.up,
+    down: migration_20261109_214356_admin_content_studio.down,
+    name: '20261109_214356_admin_content_studio',
+  },
+  {
+    up: migration_20261110_165225_homepage_hero_photos.up,
+    down: migration_20261110_165225_homepage_hero_photos.down,
+    name: '20261110_165225_homepage_hero_photos',
+  },
+  {
+    up: migration_20261111_182353_admin_delivery_copy.up,
+    down: migration_20261111_182353_admin_delivery_copy.down,
+    name: '20261111_182353_admin_delivery_copy',
   },
 ]

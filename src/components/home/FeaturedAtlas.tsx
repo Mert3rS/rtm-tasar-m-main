@@ -1,21 +1,44 @@
 'use client'
 
+import { EditableRegion } from '@/components/site/EditableRegion'
+import dynamic from 'next/dynamic'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { projectMapPoint } from '@/components/map/ProjectMap'
+import { GlobeErrorBoundary } from '@/components/globe/GlobeErrorBoundary'
 import { projectHref } from '@/lib/portfolioQuery'
 import type { GlobeCity } from '@/types/globe'
 import type { ProjectCardData } from '@/types/portfolio'
 import { TextAnimate } from '@/components/site/TextAnimate'
 import { useHomeMotion } from './HomeMotion'
+import type { HomepageCopy } from '@/lib/homepageContent'
+
+const AtlasGlobeCanvas = dynamic(() => import('@/components/globe/GlobeCanvas'), {
+  ssr: false,
+  loading: () => (
+    <div className="featured-atlas-globe-loading" role="status">
+      <span />
+      Dünya hazırlanıyor
+    </div>
+  ),
+})
+
+function AtlasGlobeFallback() {
+  return (
+    <div className="featured-atlas-globe-fallback" role="img" aria-label="Dünya küresi">
+      <span />
+    </div>
+  )
+}
 
 export function FeaturedAtlas({
   cities,
   projects,
+  copy,
 }: {
   cities: GlobeCity[]
   projects: ProjectCardData[]
+  copy: HomepageCopy
 }) {
   const motion = useHomeMotion()
   const entries = useMemo(
@@ -38,10 +61,10 @@ export function FeaturedAtlas({
   useEffect(() => {
     if (!motion || entries.length < 2) return
     const timer = window.setInterval(() => {
-      setActive((current) => (current + 1) % entries.length)
-    }, 2000)
+      setActive((active + 1) % entries.length)
+    }, 6500)
     return () => window.clearInterval(timer)
-  }, [entries.length, motion])
+  }, [active, entries.length, motion])
 
   function selectCity(cityId: string) {
     const next = entries.findIndex((candidate) => candidate.city.id === cityId)
@@ -49,14 +72,18 @@ export function FeaturedAtlas({
   }
 
   return (
-    <section className="section-space featured-atlas" aria-labelledby="featured-atlas-heading" id="one-cikan">
+    <section
+      className="section-space featured-atlas"
+      aria-labelledby="featured-atlas-heading"
+      id="one-cikan"
+    >
       <div className="site-shell">
-        <div className="section-heading">
+        <EditableRegion as="div" className="section-heading" data-rtm-edit="site-settings" data-rtm-field="homepage__atlasHeading" data-rtm-label="Proje rotası başlık ve açıklaması">
           <div>
             <p className="eyebrow">01 / PROJE ROTASI</p>
             <h2 id="featured-atlas-heading">
-              <TextAnimate animation="blurInUp" as="span" by="word" duration={0.55}>
-                Öne çıkan
+              <TextAnimate animation="slideUp" as="span" by="word" duration={0.56}>
+                {copy.atlasHeading}
               </TextAnimate>{' '}
               <em>
                 <TextAnimate
@@ -67,15 +94,15 @@ export function FeaturedAtlas({
                   duration={0.48}
                   stagger={0.022}
                 >
-                  tasarımlarımız.
+                  {copy.atlasEmphasis}
                 </TextAnimate>
               </em>
             </h2>
           </div>
           <TextAnimate animation="fadeIn" as="p" by="line" className="section-intro" delay={0.16}>
-            {'Şehirden projeye,\naynı tasarım çizgisinde.'}
+            {copy.atlasDescription}
           </TextAnimate>
-        </div>
+        </EditableRegion>
         {entry ? (
           <div className="featured-atlas-layout">
             <div className="featured-atlas-map">
@@ -86,66 +113,26 @@ export function FeaturedAtlas({
                   <span>{entry.city.countryName}</span>
                 </p>
                 <span className="micro-label">
-                  {String(active + 1).padStart(2, '0')} /{' '}
-                  {String(entries.length).padStart(2, '0')}
+                  {String(active + 1).padStart(2, '0')} / {String(entries.length).padStart(2, '0')}
                 </span>
               </div>
-              <svg
-                viewBox="390 30 420 236"
-                className="featured-dotted-world"
-                aria-label="Öne çıkan projelerin şehir haritası"
-                role="group"
-              >
-                <defs>
-                  <mask id="featured-world-dot-mask">
-                    <image href="/assets/map/world-dots.svg" width="1000" height="440" />
-                  </mask>
-                </defs>
-                <rect
-                  width="1000"
-                  height="440"
-                  mask="url(#featured-world-dot-mask)"
-                  className="featured-world-land"
-                />
-                {visibleCities.map((city) => {
-                  const point = projectMapPoint(city.lat, city.lng)
-                  const selected = city.id === entry.city.id
-                  const badgeWidth = Math.min(150, Math.max(82, city.name.length * 7 + 30))
-                  const badgeX = point.x > 760 ? -badgeWidth - 18 : 18
-                  return (
-                    <g
-                      key={city.id}
-                      transform={`translate(${point.x},${point.y})`}
-                      className={`featured-map-marker ${selected ? 'is-active' : ''}`}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`${city.name}, ${city.countryName}`}
-                      aria-pressed={selected}
-                      onClick={() => selectCity(city.id)}
-                      onFocus={() => selectCity(city.id)}
-                      onPointerEnter={() => selectCity(city.id)}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.preventDefault()
-                          selectCity(city.id)
-                        }
-                      }}
-                    >
-                      <circle r="22" className="featured-map-hit" />
-                      <circle r={selected ? 12 : 8} className="featured-map-ring" />
-                      <circle r={selected ? 4 : 3} className="featured-map-dot" />
-                      {selected ? (
-                        <g className="featured-map-badge" transform={`translate(${badgeX}, -39)`}>
-                          <rect width={badgeWidth} height="29" rx="14.5" />
-                          <text x={badgeWidth / 2} y="18.5" textAnchor="middle">
-                            {city.name}
-                          </text>
-                        </g>
-                      ) : null}
-                    </g>
-                  )
-                })}
-              </svg>
+              <div className="featured-atlas-globe-stage">
+                <div className="featured-atlas-globe-orbit" aria-hidden="true" />
+                <GlobeErrorBoundary fallback={<AtlasGlobeFallback />}>
+                  <AtlasGlobeCanvas
+                    cities={visibleCities}
+                    onSelectCity={selectCity}
+                    selectedCityId={entry.city.id}
+                    variant="atlas"
+                  />
+                </GlobeErrorBoundary>
+                <div className="featured-atlas-globe-meta" aria-hidden="true">
+                  <span>
+                    <i /> CANLI PROJE ROTASI
+                  </span>
+                  <span>SÜRÜKLE / DÖNDÜR</span>
+                </div>
+              </div>
               <div className="featured-atlas-city-list" aria-label="Öne çıkan proje şehirleri">
                 {visibleCities.map((city) => (
                   <button
@@ -159,7 +146,7 @@ export function FeaturedAtlas({
                 ))}
               </div>
             </div>
-            <article className="atlas-project-card" key={entry.project.id}>
+            <EditableRegion as="article" className="atlas-project-card" key={entry.project.id} data-rtm-edit={`projects:${entry.project.id}`} data-rtm-field="coverImage" data-rtm-label={`${entry.project.title} · Küre proje kartı`}>
               <Link
                 className="atlas-project-image"
                 href={projectHref(entry.project.slug)}
@@ -176,9 +163,7 @@ export function FeaturedAtlas({
                 ) : (
                   <span className="image-placeholder micro-label">Görsel hazırlanıyor</span>
                 )}
-                <span className="atlas-project-index">
-                  {String(active + 1).padStart(2, '0')}
-                </span>
+                <span className="atlas-project-index">{String(active + 1).padStart(2, '0')}</span>
               </Link>
               <div className="atlas-project-copy">
                 <p className="eyebrow">
@@ -191,7 +176,7 @@ export function FeaturedAtlas({
                   Projeyi incele <span aria-hidden="true">↗</span>
                 </Link>
               </div>
-            </article>
+            </EditableRegion>
           </div>
         ) : (
           <div className="featured-atlas-empty">

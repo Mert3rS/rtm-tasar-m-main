@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { clearInterest, describeProfile, MIN_PROFILE_SCORE, recommendationRequest } from '@/lib/personalization/interest'
 import { safeInternalHref } from '@/lib/assistant/links'
 import { openConsentPreferences } from '@/components/consent/ConsentProvider'
+import { TextAnimate } from '@/components/site/TextAnimate'
 import { useInterestProfile } from './useInterestProfile'
 
 type Card = {
@@ -67,7 +68,15 @@ export function InterestCards({
         <div className="interest-header">
           <div>
             <p className="interest-kicker">KİŞİSELLEŞTİRİLMİŞ</p>
-            <h2 id={`interest-${variant}`}>{variant === 'home' ? 'Sizin için seçtiklerimiz' : 'İlginizi çekebilir'}</h2>
+            <TextAnimate
+              animation="slideUp"
+              as="h2"
+              by="word"
+              duration={0.56}
+              id={`interest-${variant}`}
+            >
+              {variant === 'home' ? 'Sizin için seçtiklerimiz' : 'İlginizi çekebilir'}
+            </TextAnimate>
           </div>
           <details className="interest-why">
             <summary>Neden bunu görüyorum?</summary>

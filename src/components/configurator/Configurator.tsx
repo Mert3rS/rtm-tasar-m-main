@@ -47,6 +47,7 @@ import { TechnicalDrawing } from './TechnicalDrawing'
 import { StudioIcon } from './StudioIcon'
 import { StudioTool as Tool } from './StudioTool'
 import { DesignSummary } from './DesignSummary'
+import { SummaryDock } from './SummaryDock'
 import { StudioGuide } from './StudioGuide'
 import { MaterialSwatch } from './MaterialSwatch'
 import { MobileSheetHandle, type SheetSnap } from './MobileSheet'
@@ -147,7 +148,7 @@ export function Configurator({ origin }: { origin?: string }) {
   const [step, setStep] = useState(0),
     [selected, setSelected] = useState(0),
     [cell, setCell] = useState(0)
-  const [panel, setPanel] = useState(false),
+  const [panel, setPanel] = useState(true),
     [view, setView] = useState<'3d' | 'front' | 'drawing'>('3d')
   const [open, setOpen] = useState(false),
     [human, setHuman] = useState(false),
@@ -160,8 +161,9 @@ export function Configurator({ origin }: { origin?: string }) {
   const activeTvSelection = normalizeTvSelection(c, tvSelection)
   const [selectionFocus, setSelectionFocus] = useState(false)
   const activeKitchenSelection = c.k ? normalizeKitchenSelection(c, kitchenSelection) : kitchenSelection
-  const [zoom, setZoom] = useState(1),
+  const [zoom, setZoom] = useState(0),
     [reset, setReset] = useState(0),
+    [fit, setFit] = useState(0),
     [failed, setFailed] = useState(false),
     [retry, setRetry] = useState(0)
   const [exporting, setExporting] = useState(false),
@@ -170,14 +172,8 @@ export function Configurator({ origin }: { origin?: string }) {
   const [snap, setSnap] = useState<SheetSnap>('closed')
   useEffect(() => {
     const active = document.querySelector<HTMLElement>('.dc-steps button[aria-current="step"]')
-    if (active?.getClientRects().length) active.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
+    if (active?.getClientRects().length) active.scrollIntoView({ block: 'nearest', inline: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' })
   }, [step])
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => {
-      if (matchMedia('(max-width: 820px), (min-width: 1600px)').matches) setPanel(true)
-    })
-    return () => cancelAnimationFrame(frame)
-  }, [])
   useEffect(() => {
     // Slot for site-level fixed UI (assistant launcher hides while the mobile sheet is half/full open).
     const root = document.documentElement
@@ -214,7 +210,6 @@ export function Configurator({ origin }: { origin?: string }) {
   const [announcement, setAnnouncement] = useState('')
   const optionsButton = useRef<HTMLButtonElement>(null)
   const summaryButton = useRef<HTMLButtonElement>(null)
-  const summaryClose = useRef<HTMLButtonElement>(null)
   const workspace = useRef<HTMLDivElement>(null),
     drawing = useRef<HTMLDivElement>(null),
     scrollPanel = useRef<HTMLDivElement>(null)
@@ -257,30 +252,20 @@ export function Configurator({ origin }: { origin?: string }) {
     // Run once per requested product, after the saved/shared design has been restored.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [design.ready, requestedProduct])
-  useEffect(() => {
-    const media = matchMedia('(min-width: 1600px)')
-    const frame = requestAnimationFrame(() => {
-      setSummaryOpen(
-        safeStorage.get('rtm-studio-summary-v1', 'session') === 'open' ||
-          (safeStorage.get('rtm-studio-summary-v1', 'session') === null && media.matches),
-      )
-    })
-    const resize = () =>
-      setSummaryOpen(
-        safeStorage.get('rtm-studio-summary-v1', 'session') === 'open' ||
-          (safeStorage.get('rtm-studio-summary-v1', 'session') === null && media.matches),
-      )
-    media.addEventListener('change', resize)
-    return () => {
-      cancelAnimationFrame(frame)
-      media.removeEventListener('change', resize)
-    }
+  const changeSummary = useCallback((open: boolean) => {
+    setSummaryOpen(open)
   }, [])
-  useEffect(() => {
-    if (!summaryOpen || !mobile) return
-    const frame = requestAnimationFrame(() => summaryClose.current?.focus())
-    return () => cancelAnimationFrame(frame)
-  }, [summaryOpen, mobile])
+  const toggleFocus = useCallback(() => {
+    setFocus((value) => !value)
+    setSelectionFocus(false)
+    setSummaryOpen(false)
+    setFit((value) => value + 1)
+  }, [])
+  const resetCamera = () => {
+    setSelectionFocus(false)
+    setZoom(0)
+    setReset((value) => value + 1)
+  }
   const sceneError = useCallback(() => setFailed(true), [])
   const s = Math.min(selected, c.r.main.w.length - 1),
     i = Math.min(cell, c.r.main.g[s].h.length - 1)
@@ -289,14 +274,26 @@ export function Configurator({ origin }: { origin?: string }) {
     setRoomControls(false)
     setPanel(true)
     setSnap((value) => (value === 'closed' ? 'half' : value))
-    if (matchMedia('(max-width: 1250px)').matches) setSummaryOpen(false)
+    setSummaryOpen(false)
     scrollPanel.current?.scrollTo({ top: 0, behavior: 'instant' })
   }, [])
+  function openColors() {
+    setFocus(false)
+    if (c.bathroom) setBathroomSelection({ row: 'lower', index: 0 })
+    setSummaryOpen(false)
+    go(3)
+    requestAnimationFrame(() => {
+      const palette = document.getElementById('design-color-palette')
+      palette?.scrollIntoView({ block: 'start', behavior: 'instant' })
+      const selectedColor = palette?.querySelector<HTMLButtonElement>('button[aria-pressed="true"]') ?? palette?.querySelector<HTMLButtonElement>('button')
+      selectedColor?.focus({ preventScroll: true })
+    })
+  }
   const selectFromScene = useCallback(
     (section: number, index: number) => {
       select(section, index)
       go(2)
-      if (matchMedia('(max-width: 1250px)').matches) setSummaryOpen(false)
+      if (matchMedia('(max-width: 767px)').matches) setSummaryOpen(false)
     },
     [select, go],
   )
@@ -327,13 +324,11 @@ export function Configurator({ origin }: { origin?: string }) {
   useEffect(() => {
     function key(e: KeyboardEvent) {
       if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
+        if (document.getElementById('studio-scene-tools')?.matches(':popover-open')) return
         const extras = document.getElementById('studio-scene-extras')
         if (extras && typeof extras.hidePopover === 'function' && extras.matches(':popover-open')) { extras.hidePopover(); return }
-        workspace.current
-          ?.querySelectorAll<HTMLDetailsElement>('.dc-production-info[open]')
-          .forEach((node) => {
-            node.open = false
-          })
+        const info = document.getElementById('studio-design-info')
+        if (info?.matches(':popover-open')) { info.hidePopover(); return }
         setFocus(false)
         setHelp(false)
         setSummaryOpen(false)
@@ -342,7 +337,7 @@ export function Configurator({ origin }: { origin?: string }) {
           summaryButton.current?.focus()
           return
         }
-        if (matchMedia('(max-width: 820px)').matches) {
+        if (matchMedia('(max-width: 767px)').matches) {
           setSnap('closed')
           optionsButton.current?.focus()
         }
@@ -370,12 +365,12 @@ export function Configurator({ origin }: { origin?: string }) {
       } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault()
         setPanel((value) => !value)
-      } else if (e.key.toLowerCase() === 'f') setFocus((value) => !value)
+      } else if (e.key.toLowerCase() === 'f') toggleFocus()
       else if (e.key === '?') setHelp((v) => !v)
     }
     window.addEventListener('keydown', key)
     return () => window.removeEventListener('keydown', key)
-  }, [step, go, undo, redo, fullscreen, summaryOpen])
+  }, [step, go, undo, redo, fullscreen, summaryOpen, toggleFocus])
   useEffect(() => {
     if (!message) return
     const timer = setTimeout(() => setMessage(''), 6500)
@@ -413,6 +408,7 @@ export function Configurator({ origin }: { origin?: string }) {
   }
   function quote() {
     if (!design.ready) return
+    setSummaryOpen(false)
     design.flushSave()
     router.push(`/tasarim-olustur/teklif#c=${encode(c)}`)
   }
@@ -439,7 +435,7 @@ export function Configurator({ origin }: { origin?: string }) {
     onProduct: applyProduct,
     kitchenSelection: activeKitchenSelection,
     onKitchenSelect: setKitchenSelection,
-    bathroomSelection: activeBathroomSelection,
+    bathroomSelection: bathroomSelection.row === 'side' ? bathroomSelection : activeBathroomSelection,
     onBathroomSelect: setBathroomSelection,
     tvSelection: activeTvSelection,
     onTvSelect: setTvSelection,
@@ -473,10 +469,10 @@ export function Configurator({ origin }: { origin?: string }) {
           ref={optionsButton}
           className="dc-tool dc-options-toggle"
           aria-label="Seçenekler paneli"
-          aria-expanded={panel && snap !== 'closed'}
+          aria-expanded={panel && (!mobile || snap !== 'closed')}
           aria-controls="design-options"
           onClick={() => {
-            if (matchMedia('(max-width: 820px)').matches) {
+            if (matchMedia('(max-width: 767px)').matches) {
               setPanel(true)
               setSnap(snap === 'closed' ? 'half' : 'closed')
             } else setPanel(!panel)
@@ -484,19 +480,7 @@ export function Configurator({ origin }: { origin?: string }) {
         >
           <StudioIcon name="panel" />
         </button>
-        <nav aria-label="Tasarım adımları" className="dc-steps">
-          {steps.map((label, n) => (
-            <button
-              key={label}
-              aria-label={`${n + 1}. adım: ${label}`}
-              aria-current={step === n ? 'step' : undefined}
-              onClick={() => go(n)}
-            >
-              <span>{n < step ? <StudioIcon name="check" /> : String(n + 1).padStart(2, '0')}</span>
-              <span className="dc-step-name">{label}</span>
-            </button>
-          ))}
-        </nav>
+
         <div className="dc-actions">
           <Tool label="Geri al" onClick={design.undo} disabled={!design.canUndo}>
             <StudioIcon name="undo" />
@@ -525,15 +509,7 @@ export function Configurator({ origin }: { origin?: string }) {
             aria-label="Özet: Tasarım özeti"
             aria-expanded={summaryOpen}
             aria-controls="design-summary"
-            onClick={() => {
-              setSummaryOpen(!summaryOpen)
-              safeStorage.set(
-                'rtm-studio-summary-v1',
-                summaryOpen ? 'closed' : 'open',
-                'necessary',
-                'session',
-              )
-            }}
+            onClick={() => changeSummary(!summaryOpen)}
           >
             <StudioIcon name="layers" />
             <span>Özet</span>
@@ -558,6 +534,21 @@ export function Configurator({ origin }: { origin?: string }) {
           </button>
         </div>
       </div>
+        <nav aria-label="Tasarım adımları" className="dc-steps">
+          {steps.map((label, n) => (
+            <button
+              key={label}
+              aria-label={`${n + 1}. adım: ${label}`}
+              title={label}
+              aria-current={step === n ? 'step' : undefined}
+              data-state={n < step ? 'complete' : n === step ? 'active' : 'pending'}
+              onClick={() => go(n)}
+            >
+              <span>{n < step ? <StudioIcon name="check" /> : String(n + 1).padStart(2, '0')}</span>
+              <span className="dc-step-name">{label}</span>
+            </button>
+          ))}
+        </nav>
       <div
         className={`dc-workspace ${panel ? '' : 'dc-panel-hidden'} ${summaryOpen ? 'dc-summary-open' : ''}`}
         data-snap={snap}
@@ -676,6 +667,10 @@ export function Configurator({ origin }: { origin?: string }) {
                 </button>
               ))}
             </div>
+            <button type="button" className="dc-scene-tools-trigger" popoverTarget="studio-scene-tools" aria-label="Önizleme araçları" hidden={!mobile}>
+              <StudioIcon name="panel" /> Araçlar
+            </button>
+            <div id="studio-scene-tools" className="dc-scene-controls" popover={mobile ? 'auto' : undefined} role="group" aria-label="Önizleme araçları">
             <button
               className="dc-human"
               aria-label="İnsan ölçeği"
@@ -693,6 +688,8 @@ export function Configurator({ origin }: { origin?: string }) {
               aria-expanded={roomControls}
               aria-controls="design-options-content"
               onClick={() => {
+                const tools = document.getElementById('studio-scene-tools')
+                if (tools?.matches(':popover-open')) tools.hidePopover()
                 setRoomControls(!roomControls)
                 setPanel(true)
                 setSnap('half')
@@ -724,18 +721,17 @@ export function Configurator({ origin }: { origin?: string }) {
               >
                 <StudioIcon name="layers" />
               </Tool>
-              <Tool label="Uzaklaş" onClick={() => setZoom((v) => Math.max(0.45, v - 0.15))}>
+              <Tool label="Uzaklaş" onClick={() => setZoom((v) => v - 1)}>
                 <StudioIcon name="minus" />
               </Tool>
-              <Tool label="Yaklaş" onClick={() => setZoom((v) => Math.min(2.5, v + 0.15))}>
+              <Tool label="Yaklaş" onClick={() => setZoom((v) => v + 1)}>
                 <StudioIcon name="plus" />
               </Tool>
               <Tool
                 label="Sığdır"
                 onClick={() => {
                   setSelectionFocus(false)
-                  setZoom(1)
-                  setReset((v) => v + 1)
+                  setFit((v) => v + 1)
                 }}
               >
                 <StudioIcon name="fit" />
@@ -743,11 +739,7 @@ export function Configurator({ origin }: { origin?: string }) {
               <Tool
                 label="Kamerayı sıfırla"
                 secondary
-                onClick={() => {
-                  setSelectionFocus(false)
-                  setZoom(1)
-                  setReset((v) => v + 1)
-                }}
+                onClick={resetCamera}
               >
                 <StudioIcon name="reset" />
               </Tool>
@@ -766,16 +758,17 @@ export function Configurator({ origin }: { origin?: string }) {
               >
                 <StudioIcon name="layers" />
               </Tool>
-              <Tool label="Odak modu" pressed={focus} onClick={() => setFocus(!focus)}>
+              <Tool label="Odak modu" pressed={focus} onClick={toggleFocus}>
                 <StudioIcon name="fit" />
               </Tool>
               <Tool label="Tam ekran" onClick={fullscreen}>
                 <StudioIcon name="fullscreen" />
               </Tool>
             </div>
+            </div>
           </div>
           <div id="studio-scene-extras" className="dc-scene-popover" popover="auto" role="group" aria-label="Ek sahne araçları">
-            <button type="button" disabled={!sceneReady} popoverTarget="studio-scene-extras" popoverTargetAction="hide" onClick={() => { setZoom(1); setReset((value) => value + 1) }}>Kamerayı sıfırla</button>
+            <button type="button" disabled={!sceneReady} popoverTarget="studio-scene-extras" popoverTargetAction="hide" onClick={resetCamera}>Kamerayı sıfırla</button>
             <button type="button" popoverTarget="studio-scene-extras" popoverTargetAction="hide" aria-pressed={chips} onClick={() => setChips(!chips)}>Bilgi kartlarını göster / gizle</button>
           </div>
           <p className="dc-props-note">Eşyalar ölçek fikri vermek için temsilîdir.</p>
@@ -829,6 +822,7 @@ export function Configurator({ origin }: { origin?: string }) {
                     front={view === 'front'}
                     zoom={zoom}
                     reset={reset}
+                    fit={fit}
                     dimensions={dimensions}
                     onBoundary={editBoundary}
                     onError={sceneError}
@@ -900,7 +894,7 @@ export function Configurator({ origin }: { origin?: string }) {
                 ) : null}
               </>
             ) : null}
-            <div className="dc-material-tag">
+            <button type="button" className="dc-material-tag" onClick={openColors} aria-label={`Malzeme ve rengi değiştir: ${c.o.malz}, ${c.o.yuzey}, ${palette[c.o.renk].name}`} aria-controls="design-options" title="Malzeme ve rengi değiştir">
               <MaterialSwatch color={c.o.renk} glossy={c.o.yuzey === 'Parlak'} />
               <span>
                 {c.o.malz}
@@ -908,83 +902,63 @@ export function Configurator({ origin }: { origin?: string }) {
                   {c.o.yuzey} / {palette[c.o.renk].name}
                 </small>
               </span>
-            </div>
+              <StudioIcon name="arrow" />
+            </button>
             {c.k && view !== 'drawing' ? <KitchenSelectionDock config={c} selection={activeKitchenSelection} onSelect={setKitchenSelection} focused={selectionFocus} onFocus={() => setSelectionFocus((value) => !value)} /> : null}
             {c.tvUnit && view !== 'drawing' ? <TvSelectionDock config={c} selection={activeTvSelection} onSelect={setTvSelection} focused={selectionFocus} onFocus={() => setSelectionFocus((value) => !value)} /> : null}
             {c.bathroom && view !== 'drawing' ? <BathroomSelectionDock config={c} selection={activeBathroomSelection} onSelect={setBathroomSelection} focused={selectionFocus} onFocus={() => setSelectionFocus((value) => !value)} /> : null}
             {c.entryway && view !== 'drawing' ? <EntrywaySelectionDock config={c} selected={s} onSelect={select} focused={selectionFocus} onFocus={() => setSelectionFocus((value) => !value)} /> : null}
             {c.wardrobe && view !== 'drawing' ? <WardrobeSelectionDock config={c} selected={s} onSelect={select} focused={selectionFocus} onFocus={() => setSelectionFocus((value) => !value)} /> : null}
           </div>
-          <footer className="dc-stage-footer">
-            <span>
-              <i />
-              {design.ready ? 'Tasarım tarayıcınızda saklanır' : 'Tasarım yükleniyor…'}
-            </span>
-            <span>
-              {c.d.w} × {c.d.h} × {c.d.d} cm
-            </span>
-            <button onClick={() => setGuide(true)}>Rehber</button>
-            <button onClick={() => setHelp(!help)} aria-expanded={help}>
-              ? <span>Kısayollar</span>
-            </button>
-            <details className="dc-production-info">
-              <summary
-                aria-label="Bu araç üretim/CNC çizimi değildir."
-                title="Bu araç üretim/CNC çizimi değildir."
-              >
-                ⓘ
-              </summary>
-              <p>Bu araç üretim/CNC çizimi değildir.</p>
-            </details>
-          </footer>
         </section>
-        <aside
-          id="design-summary"
-          className="dc-summary-sidebar"
-          aria-label="Tasarım özeti"
-          hidden={!summaryOpen}
-        >
-          <div className="dc-summary-heading">
-            <span>Tasarım özeti</span>
-            <button
-              ref={summaryClose}
-              aria-label="Özeti kapat"
-              onClick={() => {
-                setSummaryOpen(false)
-                safeStorage.set('rtm-studio-summary-v1', 'closed', 'necessary', 'session')
-                summaryButton.current?.focus()
-              }}
-            >
-              <StudioIcon name="close" />
-            </button>
-          </div>
-          <DesignSummary config={c} selected={s} cell={i} onStep={go} onSelect={selectFromScene} tvSelection={activeTvSelection} onTvSelect={(selection) => { setTvSelection(selection); go(2) }} bathroomSelection={activeBathroomSelection} onBathroomSelect={(selection) => { setBathroomSelection(selection); go(2) }} kitchenSelection={activeKitchenSelection} onKitchenSelect={(selection) => { setKitchenSelection(selection); go(2) }} />
-        </aside>
+
       </div>
+          <SummaryDock open={summaryOpen} onOpenChange={changeSummary} onQuote={quote} ready={design.ready}>
+            <DesignSummary config={c} selected={s} cell={i} onStep={go} onSelect={selectFromScene} tvSelection={activeTvSelection} onTvSelect={(selection) => { setTvSelection(selection); go(2) }} bathroomSelection={activeBathroomSelection} onBathroomSelect={(selection) => { setBathroomSelection(selection); go(2) }} kitchenSelection={activeKitchenSelection} onKitchenSelect={(selection) => { setKitchenSelection(selection); go(2) }} />
+          </SummaryDock>
       <footer className="dc-bottom-nav">
-        <button disabled={step === 0} onClick={() => go(step - 1)}>
+        <button aria-label="Önceki adım" disabled={step === 0} onClick={() => go(step - 1)}>
           <StudioIcon name="back" />
           <span>Önceki adım</span>
         </button>
-        <div>
+        <div className="dc-bottom-step">
           <strong>Adım {step + 1}/6</strong>
           <span> · {steps[step]}</span>
         </div>
-        {step < 5 ? (
-          <button className="dc-primary" onClick={() => go(step + 1)}>
-            Sonraki adım
-            <StudioIcon name="arrow" />
+        <div className="dc-bottom-actions" role="group" aria-label="Tasarım ve adım araçları">
+          <button type="button" className="dc-footer-tool" onClick={() => go(1)} aria-label={`Ölçüleri düzenle: ${c.d.w} × ${c.d.h} × ${c.d.d} cm`} title={`Ölçüleri düzenle: ${c.d.w} × ${c.d.h} × ${c.d.d} cm`}>
+            <StudioIcon name="measure" />
+            <span>{c.d.w} × {c.d.h} × {c.d.d} cm</span>
           </button>
-        ) : (
-          <button className="dc-primary" onClick={quote}>
-            Teklif isteyin
-            <StudioIcon name="arrow" />
+          <button type="button" className="dc-footer-tool" onClick={() => setGuide(true)} aria-label="Rehber" title="Rehber">
+            <StudioIcon name="help" /><span>Rehber</span>
           </button>
-        )}
+          <button type="button" className="dc-footer-tool" onClick={() => setHelp(!help)} aria-expanded={help} aria-label="Kısayollar" title="Klavye kısayolları">
+            <StudioIcon name="keyboard" /><span>Kısayollar</span>
+          </button>
+          <button type="button" className="dc-footer-tool" popoverTarget="studio-design-info" aria-label="Tasarım bilgisi" title="Tasarım bilgisi">
+            <StudioIcon name="info" /><span>Bilgi</span>
+          </button>
+          {step < 5 ? (
+            <button className="dc-primary" onClick={() => go(step + 1)}>
+              Sonraki adım
+              <StudioIcon name="arrow" />
+            </button>
+          ) : (
+            <button className="dc-primary" onClick={quote}>
+              Teklif isteyin
+              <StudioIcon name="arrow" />
+            </button>
+          )}
+        </div>
       </footer>
+      <div id="studio-design-info" className="dc-footer-info" popover="auto" role="region" aria-label="Tasarım bilgisi">
+        <strong>{design.ready ? 'Tasarım tarayıcınızda saklanır' : 'Tasarım yükleniyor…'}</strong>
+        <p>Bu araç üretim/CNC çizimi değildir. Ölçü ve donanım uygunluğu üretim öncesinde doğrulanmalıdır.</p>
+      </div>
       <StudioGuide requested={guide} onClose={closeGuide} />
       <p className="dc-sr-only" role="status" aria-live="polite">
-        {c.bathroom ? `${activeBathroomSelection.row === 'upper' ? 'Üst' : 'Alt'} dolap ${activeBathroomSelection.index + 1}. bölme seçildi.` : announcement} Ölçüler: {c.d.w} × {c.d.h} × {c.d.d} cm. {c.bathroom ? '' : `${frontNames[c.r.main.g[s].f[i]]}, `}
+        {c.bathroom ? `${activeBathroomSelection.row === 'side' ? 'Boy' : activeBathroomSelection.row === 'upper' ? 'Üst' : 'Alt'} dolap ${activeBathroomSelection.index + 1}. bölme seçildi.` : announcement} Ölçüler: {c.d.w} × {c.d.h} × {c.d.d} cm. {c.bathroom ? '' : `${frontNames[c.r.main.g[s].f[i]]}, `}
         {c.tvUnit ? tvKindNames[tvGeometry(c)[activeTvSelection.row][activeTvSelection.index].kind] : c.bathroom ? bathroomKindNames[bathroomGeometry(c)[activeBathroomSelection.row][activeBathroomSelection.index].kind] : c.entryway ? entrywayLayoutNames[c.entryway.layouts[s]] : c.wardrobe ? wardrobeLayoutNames[c.wardrobe.layouts[s]] : interiorNames[c.r.main.g[s].ic[i]]}. {c.o.malz}, {c.o.yuzey}, {palette[c.o.renk].name}.
       </p>
       {help ? (

@@ -34,7 +34,7 @@ export function BathroomSelectionDock({
         ←
       </button>
       <span>
-        {selection.row === 'upper' ? 'Üst' : 'Alt'} dolap · {selection.index + 1} · {unit.width} cm
+        {selection.row === 'side' ? 'Boy dolabı' : selection.row === 'upper' ? 'Üst dolap' : 'Alt dolap'} · {selection.index + 1} · {unit.width} cm
         <small>{bathroomKindNames[unit.kind]}</small>
       </span>
       <button

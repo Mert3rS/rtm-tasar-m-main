@@ -1,6 +1,7 @@
 import type { CollectionConfig, Where } from 'payload'
 import { isAuthenticated } from '../access/isAuthenticated'
 import { slugField } from '../fields/slug'
+import { photoGuideField } from '../fields/photoGuide'
 import { preventReferencedSceneDelete, validateShowroomScene } from '../hooks/validateShowroomScene'
 
 export const ShowroomScenes: CollectionConfig = {
@@ -29,6 +30,7 @@ export const ShowroomScenes: CollectionConfig = {
   indexes: [{ fields: ['showroom', 'sceneKey'], unique: true }],
   hooks: { beforeValidate: [validateShowroomScene], beforeDelete: [preventReferencedSceneDelete] },
   fields: [
+    photoGuideField('showroom-scenes'),
     {
       name: 'showroom',
       type: 'relationship',
@@ -62,6 +64,10 @@ export const ShowroomScenes: CollectionConfig = {
       type: 'upload',
       relationTo: 'media',
       label: 'Küçük önizleme (isteğe bağlı)',
+      admin: {
+        description:
+          'Turun altındaki sahne seçim düğmesinin normal fotoğrafı. Tercihen 640×360 px veya daha büyük yatay kare; boşsa 360° yazısı gösterilir. Turun asıl panoramasını değiştirmez.',
+      },
     },
     { name: 'description', type: 'textarea', maxLength: 600, label: 'Sahne açıklaması' },
     {

@@ -89,7 +89,7 @@ describe('Intent recognition', () => {
     expect(reply.intent).toBe('pricing')
     const text = JSON.stringify(reply.blocks)
     expect(text).not.toMatch(/\d+\s*(tl|₺|gün|hafta|euro)/i)
-    expect(reply.actions.some((action) => action.href === '/teklif-al')).toBe(true)
+    expect(reply.actions.some((action) => action.href === '/iletisim')).toBe(true)
   })
   it('only answers from provided published knowledge', () => {
     for (const question of ['projeleriniz', 'hizmetleriniz neler', 'modeller', 'showroom var mı', 'telefon numaranız']) {
