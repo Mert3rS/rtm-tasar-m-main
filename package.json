@@ -33,6 +33,7 @@
     "@payloadcms/email-nodemailer": "3.92.1",
     "@payloadcms/next": "3.92.1",
     "@payloadcms/richtext-lexical": "3.92.1",
+    "@payloadcms/storage-vercel-blob": "3.92.1",
     "@payloadcms/ui": "3.92.1",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",

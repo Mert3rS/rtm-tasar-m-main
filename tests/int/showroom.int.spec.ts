@@ -22,6 +22,13 @@ describe('Panorama boundaries', () => {
       expect(uploadLimitBytes()).toBe(32 * 1024 * 1024)
     }
   })
+  it('keeps Vercel server uploads below the request limit without raising a lower configured limit', () => {
+    vi.stubEnv('VERCEL', '1')
+    vi.stubEnv('MEDIA_MAX_UPLOAD_MB', '32')
+    expect(uploadLimitBytes()).toBe(4 * 1024 * 1024)
+    vi.stubEnv('MEDIA_MAX_UPLOAD_MB', '2')
+    expect(uploadLimitBytes()).toBe(2 * 1024 * 1024)
+  })
   it.each([
     'https://evil.example/pano.jpg',
     '//evil.example/pano.jpg',
@@ -30,6 +37,13 @@ describe('Panorama boundaries', () => {
     '/api/media/file/pano.jpg?remote=1',
     '/api/media/file/../other.jpg',
     '/api/media/file/%00.jpg',
+    'https://other.public.blob.vercel-storage.com/pano.jpg',
+    'https://1qldjncltmptxwup.public.blob.vercel-storage.com.evil.example/pano.jpg',
+    'https://user@1qldjncltmptxwup.public.blob.vercel-storage.com/pano.jpg',
+    'https://1qldjncltmptxwup.public.blob.vercel-storage.com/pano.jpg?remote=1',
+    'https://1qldjncltmptxwup.public.blob.vercel-storage.com/pano.jpg#fragment',
+    'https://1qldjncltmptxwup.public.blob.vercel-storage.com/%2fother.jpg',
+    'http://1qldjncltmptxwup.public.blob.vercel-storage.com/pano.jpg',
   ])('does not allow arbitrary panorama asset URLs: %s', (value) => {
     expect(managedMediaUrl(value)).toBeUndefined()
   })
@@ -37,4 +51,10 @@ describe('Panorama boundaries', () => {
     expect(managedMediaUrl('/api/media/file/approved-pano.jpg')).toBe(
       '/api/media/file/approved-pano.jpg',
     ))
+  it('also allows the existing owned Blob store, including nested encoded filenames', () => {
+    for (const path of ['sunum-lebombo.jpg', 'panoramas/room%20one.webp']) {
+      const url = `https://1qldjncltmptxwup.public.blob.vercel-storage.com/${path}`
+      expect(managedMediaUrl(url)).toBe(url)
+    }
+  })
 })

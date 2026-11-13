@@ -849,7 +849,9 @@ Paylaşılabilir yerel çıktılar `.tools/phase8.3-qa/` altında korunmuştur: 
 - Node.js sunucusu ve erişilebilir bir PostgreSQL servisi gerekir.
 - `DATABASE_URI`, `PAYLOAD_SECRET` ve `NEXT_PUBLIC_SERVER_URL` platformun secret/environment yönetiminde tanımlanmalıdır.
 - Production öncesi migration'lar çalıştırılmalıdır.
-- `/media` yerel dosya sistemi yerine kalıcı, S3 uyumlu bir obje depolamaya taşınmalıdır.
+- Public medya için native Payload Vercel Blob adapteri yapılandırılmıştır. `BLOB_READ_WRITE_TOKEN` mevcut sahip olunan Blob deposuna ait olmalıdır; token yokken yalnızca yerel `media/` kullanılır. Özel başvuru ekleri public Blob deposuna bağlanmaz.
+- Vercel'de medya yüklemeleri multipart payı için 4 MiB ile sınırlıdır; daha düşük `MEDIA_MAX_UPLOAD_MB` korunur. `clientUploads` kapalıdır: panorama dahil gerçek byte doğrulaması sunucuda Sharp ile sürer. Daha büyük yükleme için doğrulamalı ayrı bir akış gerekir.
+- Mevcut dosyaların kurtarılması ve kontrollü release adımı: [Medya kurtarma notları](docs/media-recovery.md).
 - HTTPS kullanılmalı; veritabanı ve yönetim sırları repoya eklenmemelidir.
 
 ### Admin teslim merkezi ve yönetilebilir arayüz metinleri

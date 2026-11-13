@@ -22,6 +22,15 @@ const nextConfig: NextConfig = {
         pathname: '/api/media/file/**',
       },
     ],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '1qldjncltmptxwup.public.blob.vercel-storage.com',
+        port: '',
+        pathname: '/**',
+        search: '',
+      },
+    ],
   },
   webpack: (webpackConfig) => {
     webpackConfig.resolve.extensionAlias = {

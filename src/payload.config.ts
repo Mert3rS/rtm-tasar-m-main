@@ -1,5 +1,6 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { lexicalEditor } from '@payloadcms/richtext-lexical'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { tr } from 'payload/i18n/tr'
@@ -135,5 +136,16 @@ export default buildConfig({
     },
   }),
   sharp,
-  plugins: [],
+  plugins: [
+    vercelBlobStorage({
+      addRandomSuffix: true,
+      alwaysInsertFields: true,
+      // Keep uploads on the server so validateMedia checks the actual bytes with Sharp.
+      // Direct browser uploads require a separate verified upload flow first.
+      clientUploads: false,
+      collections: { media: { disablePayloadAccessControl: true } },
+      enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+      token: process.env.BLOB_READ_WRITE_TOKEN,
+    }),
+  ],
 }).then(withMediaFilenameCell)
